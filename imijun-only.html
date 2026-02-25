@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>イミジュントレーニング</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(-5%);
+            }
+
+            50% {
+                transform: translateY(0);
+            }
+        }
+
+        .animate-bounce {
+            animation: bounce 0.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 min-h-screen">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // ========== COURSE DATA ==========
+        const COURSES = [
+            {
+                id: 2024022301,
+                title: "英語語順トレーニング",
+                updatedAt: new Date().toISOString(),
+                japaneseOnly: true,
+                flashcards: [
+                    { id: 1, front: "日本語と英語の大きな違いは？", back: "語順が違う", hint: "英語は並べる順番がとても重要です" },
+                    { id: 2, front: "英語は語順を変えるとどうなる？", back: "意味が通じなくなる", hint: "順番に意味があるためです" },
+                    { id: 3, front: "英語の語順は何種類ある？", back: "2種類「です文」と「する文」", hint: "動詞の種類によって分かれます" },
+                    { id: 4, front: "英語の語順の1種類目は？", back: "「です文」：だれが → です → 〜(ニョロ) → 所 → 状 → 時", hint: "be動詞(〜です)を使う文です" },
+                    { id: 5, front: "英語の語順の2種類目は？", back: "「する文」：だれが → する → だれ・なに → 所 → 状 → 時", hint: "一般動詞(〜する)を使う文です" }
+                ],
+                questions: [
+                    {
+                        id: 1, original: "ケンがボールを蹴った", translation: "N/A", hint: "だれが → する → なに",
+                        rows: [{ id: 'main', structure: { who: { jp: "ケンが", en: "N/A" }, does: { jp: "蹴った", en: "N/A" }, what: { jp: "ボールを", en: "N/A" }, where: null, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "ケンが", category: 'who' }, { id: 'j2', text: "蹴った", category: 'does' }, { id: 'j3', text: "ボールを", category: 'what' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 2, original: "私は加藤です", translation: "N/A", hint: "だれが → です → 〜(ニョロ)",
+                        rows: [{ id: 'main', structure: { who: { jp: "私は", en: "N/A" }, does: { jp: "です", en: "N/A" }, what: { jp: "加藤", en: "N/A" }, where: null, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "です", category: 'does' }, { id: 'j3', text: "加藤", category: 'what' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 3, original: "彼は今日学校に行く", translation: "N/A", hint: "だれが → する → 所 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼は", en: "N/A" }, does: { jp: "行く", en: "N/A" }, what: null, where: { jp: "学校に", en: "N/A" }, how: null, when: { jp: "今日", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "行く", category: 'does' }, { id: 'j3', text: "学校に", category: 'where' }, { id: 'j4', text: "今日", category: 'when' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 4, original: "先生がみんなに話した", translation: "N/A", hint: "だれが → する → だれ(に)",
+                        rows: [{ id: 'main', structure: { who: { jp: "先生が", en: "N/A" }, does: { jp: "話した", en: "N/A" }, what: { jp: "みんなに", en: "N/A" }, where: null, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "先生が", category: 'who' }, { id: 'j2', text: "話した", category: 'does' }, { id: 'j3', text: "みんなに", category: 'what' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 5, original: "彼女は毎朝家で勉強する", translation: "N/A", hint: "だれが → する → 所 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼女は", en: "N/A" }, does: { jp: "勉強する", en: "N/A" }, what: null, where: { jp: "家で", en: "N/A" }, how: null, when: { jp: "毎朝", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "彼女は", category: 'who' }, { id: 'j2', text: "勉強する", category: 'does' }, { id: 'j3', text: "家で", category: 'where' }, { id: 'j4', text: "毎朝", category: 'when' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 6, original: "子どもが公園で遊んでいる", translation: "N/A", hint: "だれが → する → 所",
+                        rows: [{ id: 'main', structure: { who: { jp: "子どもが", en: "N/A" }, does: { jp: "遊んでいる", en: "N/A" }, what: null, where: { jp: "公園で", en: "N/A" }, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "子どもが", category: 'who' }, { id: 'j2', text: "遊んでいる", category: 'does' }, { id: 'j3', text: "公園で", category: 'where' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 7, original: "彼は元気です", translation: "N/A", hint: "だれが → です → 〜(ニョロ)",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼は", en: "N/A" }, does: { jp: "です", en: "N/A" }, what: { jp: "元気", en: "N/A" }, where: null, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "です", category: 'does' }, { id: 'j3', text: "元気", category: 'what' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 8, original: "ケンがゆっくりボールを蹴った", translation: "N/A", hint: "だれが → する → なに → 状",
+                        rows: [{ id: 'main', structure: { who: { jp: "ケンが", en: "N/A" }, does: { jp: "蹴った", en: "N/A" }, what: { jp: "ボールを", en: "N/A" }, where: null, how: { jp: "ゆっくり", en: "N/A" }, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "ケンが", category: 'who' }, { id: 'j2', text: "蹴った", category: 'does' }, { id: 'j3', text: "ボールを", category: 'what' }, { id: 'j4', text: "ゆっくり", category: 'how' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 9, original: "宇宙人が教室でこっそり昨日、給食を食べた", translation: "N/A", hint: "だれが → する → なに → 所 → 状 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "宇宙人が", en: "N/A" }, does: { jp: "食べた", en: "N/A" }, what: { jp: "給食を", en: "N/A" }, where: { jp: "教室で", en: "N/A" }, how: { jp: "こっそり", en: "N/A" }, when: { jp: "昨日、", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "宇宙人が", category: 'who' }, { id: 'j2', text: "食べた", category: 'does' }, { id: 'j3', text: "給食を", category: 'what' }, { id: 'j4', text: "教室で", category: 'where' }, { id: 'j5', text: "こっそり", category: 'how' }, { id: 'j6', text: "昨日、", category: 'when' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 10, original: "ぼくは休み時間に廊下で全力で、消しゴムを投げる", translation: "N/A", hint: "だれが → する → なに → 所 → 状 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "ぼくは", en: "N/A" }, does: { jp: "投げる", en: "N/A" }, what: { jp: "消しゴムを", en: "N/A" }, where: { jp: "廊下で", en: "N/A" }, how: { jp: "全力で、", en: "N/A" }, when: { jp: "休み時間に", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "ぼくは", category: 'who' }, { id: 'j2', text: "投げる", category: 'does' }, { id: 'j3', text: "消しゴムを", category: 'what' }, { id: 'j4', text: "廊下で", category: 'where' }, { id: 'j5', text: "全力で、", category: 'how' }, { id: 'j6', text: "休み時間に", category: 'when' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 11, original: "ねこが夜に家でどや顔で、リモコンを押した", translation: "N/A", hint: "だれが → する → なに → 所 → 状 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "ねこが", en: "N/A" }, does: { jp: "押した", en: "N/A" }, what: { jp: "リモコンを", en: "N/A" }, where: { jp: "家で", en: "N/A" }, how: { jp: "どや顔で、", en: "N/A" }, when: { jp: "夜に", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "ねこが", category: 'who' }, { id: 'j2', text: "押した", category: 'does' }, { id: 'j3', text: "リモコンを", category: 'what' }, { id: 'j4', text: "家で", category: 'where' }, { id: 'j5', text: "どや顔で、", category: 'how' }, { id: 'j6', text: "夜に", category: 'when' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 12, original: "ぼくはさっき机の下でびくびく、0点のテストを見つけた", translation: "N/A", hint: "だれが → する → なに → 所 → 状 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "ぼくは", en: "N/A" }, does: { jp: "見つけた", en: "N/A" }, what: { jp: "0点のテストを", en: "N/A" }, where: { jp: "机の下で", en: "N/A" }, how: { jp: "びくびく、", en: "N/A" }, when: { jp: "さっき", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "ぼくは", category: 'who' }, { id: 'j2', text: "見つけた", category: 'does' }, { id: 'j3', text: "0点のテストを", category: 'what' }, { id: 'j4', text: "机の下で", category: 'where' }, { id: 'j5', text: "びくびく、", category: 'how' }, { id: 'j6', text: "さっき", category: 'when' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 13, original: "友だちが昼に体育館で大声で、アニメの歌を歌った", translation: "N/A", hint: "だれが → する → なに → 所 → 状 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "友だちが", en: "N/A" }, does: { jp: "歌った", en: "N/A" }, what: { jp: "アニメの歌を", en: "N/A" }, where: { jp: "体育館で", en: "N/A" }, how: { jp: "大声で、", en: "N/A" }, when: { jp: "昼に", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "友だちが", category: 'who' }, { id: 'j2', text: "歌った", category: 'does' }, { id: 'j3', text: "アニメの歌を", category: 'what' }, { id: 'j4', text: "体育館で", category: 'where' }, { id: 'j5', text: "大声で、", category: 'how' }, { id: 'j6', text: "昼に", category: 'when' }],
+                        enOptions: []
+                    },
+                    {
+                        id: 14, original: "お母さんが毎日台所でにこにこ、プリンを作る", translation: "N/A", hint: "だれが → する → なに → 所 → 状 → 時",
+                        rows: [{ id: 'main', structure: { who: { jp: "お母さんが", en: "N/A" }, does: { jp: "作る", en: "N/A" }, what: { jp: "プリンを", en: "N/A" }, where: { jp: "台所で", en: "N/A" }, how: { jp: "にこにこ、", en: "N/A" }, when: { jp: "毎日", en: "N/A" } } }],
+                        jpOptions: [{ id: 'j1', text: "お母さんが", category: 'who' }, { id: 'j2', text: "作る", category: 'does' }, { id: 'j3', text: "プリンを", category: 'what' }, { id: 'j4', text: "台所で", category: 'where' }, { id: 'j5', text: "にこにこ、", category: 'how' }, { id: 'j6', text: "毎日", category: 'when' }],
+                        enOptions: []
+                    }
+                ]
+            },
+            {
+                id: 2024011601,
+                title: "中1英語・第8講「英語の語順のルール」",
+                flashcards: [
+                    { id: 1, front: "英語と日本語の最大の違いは？", back: "「語順（言葉を並べる順番）」が違う！", hint: "単語だけ覚えても通じない理由です" },
+                    { id: 2, front: "英語の基本文型（語順）は？", back: "誰が → どうする → 何を\n(Subject → Verb → Object)", hint: "日本語は「誰が→何を→どうする」ですが…" },
+                    { id: 3, front: "「私はテニスをします」を英語の語順にすると？", back: "私は → します → テニスを\n(I play tennis.)", hint: "結論（動作）を先に言います" },
+                    { id: 4, front: "「場所」と「時」を並べるとき、どっちが先？", back: "「場所」→「時」の順番\n(例：in the park on Sunday)", hint: "小さい単位（場所）から大きい単位（時）へ" },
+                    { id: 5, front: "日本語は「最後まで聞かないとわからない」言語。英語は？", back: "「最初に結論（誰がどうする）を言う」言語", hint: "だから英語は主語のすぐ後に動詞が来ます" }
+                ],
+                questions: [
+                    {
+                        id: 1, original: "私は毎日テニスをします。", translation: "I play tennis every day.", hint: "「誰が→どうする→何を→いつ」の順番で並べましょう。",
+                        rows: [{ id: 'main', structure: { who: { jp: "私は", en: "I" }, does: { jp: "します", en: "play" }, what: { jp: "テニスを", en: "tennis" }, when: { jp: "毎日", en: "every day" }, where: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "します", category: 'does' }, { id: 'j3', text: "テニスを", category: 'what' }, { id: 'j4', text: "毎日", category: 'when' }, { id: 'j5', text: "公園で", category: 'dummy' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "play", category: 'does' }, { id: 'e3', text: "tennis", category: 'what' }, { id: 'e4', text: "every day", category: 'when' }, { id: 'e5', text: "plays", category: 'dummy' }]
+                    },
+                    {
+                        id: 2, original: "私は英語が好きです。", translation: "I like English.", hint: "「好き」も英語では動作（どうする）の位置に置きます。",
+                        rows: [{ id: 'main', structure: { who: { jp: "私は", en: "I" }, does: { jp: "好きです", en: "like" }, what: { jp: "英語が", en: "English" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "好きです", category: 'does' }, { id: 'j3', text: "英語が", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "like", category: 'does' }, { id: 'e3', text: "English", category: 'what' }]
+                    },
+                    {
+                        id: 3, original: "私は日曜日、公園でテニスをします。", translation: "I play tennis in the park on Sunday.", hint: "場所（公園で）と 時（日曜日）の語順に注意！「場所 → 時」です。",
+                        rows: [{ id: 'main', structure: { who: { jp: "私は", en: "I" }, does: { jp: "します", en: "play" }, what: { jp: "テニスを", en: "tennis" }, where: { jp: "公園で", en: "in the park" }, when: { jp: "日曜日に", en: "on Sunday" } } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "します", category: 'does' }, { id: 'j3', text: "テニスを", category: 'what' }, { id: 'j4', text: "公園で", category: 'where' }, { id: 'j5', text: "日曜日に", category: 'when' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "play", category: 'does' }, { id: 'e3', text: "tennis", category: 'what' }, { id: 'e4', text: "in the park", category: 'where' }, { id: 'e5', text: "on Sunday", category: 'when' }]
+                    }
+                ]
+            },
+            {
+                id: 2024011701,
+                title: "中学英語【１年】 第９講 『a/anとtheの使い方』",
+                flashcards: [
+                    { id: 1, front: "「a / an」と「the」の大きな違いは？", back: "a/an = たくさんある中の「とある１つ」（不特定）\nthe = 「その」「例の」と指させるもの（特定）", hint: "「どれでもいい１つ」か「それ！」と決まっているか" },
+                    { id: 2, front: "「a」と「an」の使い分けは？", back: "後ろの単語の発音が\n「母音(a,i,u,e,o)」で始まるときは an\nそれ以外は a", hint: "スペルではなく「発音」で判断します（例: an hour）" },
+                    { id: 3, front: "「楽器」を演奏するとき、冠詞（a/the）はつく？", back: "楽器には「the」をつける\n(例: play the piano)", hint: "楽器は「その楽器」と特定して演奏するイメージ" },
+                    { id: 4, front: "「スポーツ」をするとき、冠詞（a/the）はつく？", back: "スポーツには「何もつかない」\n(例: play soccer)", hint: "スポーツは世界共通のルール（概念）なので特定しません" },
+                    { id: 5, front: "「昼食を食べる」と言うとき、冠詞は？", back: "食事（breakfast, lunch, dinner）には何もつかない\n(例: eat lunch)", hint: "習慣的な食事には冠詞は不要です" }
+                ],
+                questions: [
+                    {
+                        id: 1, original: "私はペンを持っています。", translation: "I have a pen.", hint: "特定されていない「とある1本のペン」なので a を使います。",
+                        rows: [{ id: 'main', structure: { who: { jp: "私は", en: "I" }, does: { jp: "持っています", en: "have" }, what: { jp: "ペンを", en: "a pen" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "持っています", category: 'does' }, { id: 'j3', text: "ペンを", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "have", category: 'does' }, { id: 'e3', text: "a pen", category: 'what' }, { id: 'e4', text: "the pen", category: 'dummy' }]
+                    },
+                    {
+                        id: 2, original: "彼女はピアノを弾きます。", translation: "She plays the piano.", hint: "楽器（piano）の前には the が必要です。",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼女は", en: "She" }, does: { jp: "弾きます", en: "plays" }, what: { jp: "ピアノを", en: "the piano" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼女は", category: 'who' }, { id: 'j2', text: "弾きます", category: 'does' }, { id: 'j3', text: "ピアノを", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "She", category: 'who' }, { id: 'e2', text: "plays", category: 'does' }, { id: 'e3', text: "the piano", category: 'what' }, { id: 'e4', text: "piano", category: 'dummy' }]
+                    },
+                    {
+                        id: 3, original: "これは卵です。", translation: "This is an egg.", hint: "egg は母音(e)で始まるので、a ではなく an を使います。",
+                        rows: [{ id: 'main', structure: { who: { jp: "これは", en: "This" }, does: { jp: "です(=)", en: "is" }, what: { jp: "卵", en: "an egg" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "これは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "卵", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "This", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "an egg", category: 'what' }, { id: 'e4', text: "a egg", category: 'dummy' }]
+                    }
+                ]
+            },
+            {
+                id: 2024011702,
+                title: "中学英語【１年】 第10講 『所有格と形容詞』",
+                flashcards: [
+                    { id: 1, front: "「私の」「あなたの」のような言葉を何と言う？", back: "所有格 (Possessive)\nmy, your, his, her など", hint: "「誰のもの」かを表す言葉です" },
+                    { id: 2, front: "「大きい」や「赤い」のような言葉を何と言う？", back: "形容詞 (Adjective)\n名詞の性質や状態を説明します", hint: "big, red, new, tall など" },
+                    { id: 3, front: "形容詞を置く場所①：名詞を詳しくするとき", back: "名詞の「前」に置く\n例: a big dog", hint: "日本語と同じ語順です（大きい犬）" },
+                    { id: 4, front: "形容詞を置く場所②：主語を説明するとき", back: "be動詞の「後ろ」に置く\n例: The dog is big.", hint: "S = C の関係（その犬＝大きい）" },
+                    { id: 5, front: "「彼」と「彼の」の使い分けは？", back: "彼は = He (主語)\n彼の = His (所有格)", hint: "言葉の役割によって形が変わります" }
+                ],
+                questions: [
+                    {
+                        id: 1, original: "これは私のペンです。", translation: "This is my pen.", hint: "「私の(my)」は名詞(pen)の前に置きます。",
+                        rows: [{ id: 'main', structure: { who: { jp: "これは", en: "This" }, does: { jp: "です", en: "is" }, what: { jp: "私のペン", en: "my pen" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "これは", category: 'who' }, { id: 'j2', text: "です", category: 'does' }, { id: 'j3', text: "私のペン", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "This", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "my pen", category: 'what' }, { id: 'e4', text: "I pen", category: 'dummy' }]
+                    },
+                    {
+                        id: 2, original: "彼は背が高い。", translation: "He is tall.", hint: "be動詞の後ろに形容詞(tall)を置くと「～は背が高いです」となります。",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼は", en: "He" }, does: { jp: "です(=)", en: "is" }, what: { jp: "背が高い", en: "tall" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "背が高い", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "He", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "tall", category: 'what' }, { id: 'e4', text: "toll", category: 'dummy' }]
+                    },
+                    {
+                        id: 3, original: "彼女の猫は可愛いです。", translation: "Her cat is cute.", hint: "主語は「彼女」ではなく「彼女の猫」です。",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼女の猫は", en: "Her cat" }, does: { jp: "です(=)", en: "is" }, what: { jp: "可愛い", en: "cute" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼女の猫は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "可愛い", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "Her cat", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "cute", category: 'what' }, { id: 'e4', text: "She cat", category: 'dummy' }]
+                    }
+                ]
+            },
+            {
+                id: 2024011703,
+                title: "中学英語【１年】 第11講 『名詞の複数形』",
+                flashcards: [
+                    { id: 1, front: "「複数形」を作る基本のルールは？", back: "名詞の最後に「s」をつける\n例: apple → apples", hint: "もっとも一般的な形です" },
+                    { id: 2, front: "「es」をつけるのはどんな時？", back: "語尾が s, sh, ch, x, o のとき\n例: box → boxes", hint: "発音しやすくするためです" },
+                    { id: 3, front: "「子音 + y」で終わる単語のルールは？", back: "y を i に変えて es\n例: city → cities", hint: "母音(a,i,u,e,o) + y の場合（play→plays）はそのままでOK" },
+                    { id: 4, front: "不規則な変化をする名詞の例（男の人）", back: "man → men\n（woman → women）", hint: "sはつきません。中の母音が変わります" },
+                    { id: 5, front: "不規則な変化をする名詞の例（子供）", back: "child → children", hint: "これは丸暗記が必要です" }
+                ],
+                questions: [
+                    {
+                        id: 1, original: "私は２本のペンを持っています。", translation: "I have two pens.", hint: "2本なので pen を複数形にします。",
+                        rows: [{ id: 'main', structure: { who: { jp: "私は", en: "I" }, does: { jp: "持っています", en: "have" }, what: { jp: "2本のペンを", en: "two pens" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "持っています", category: 'does' }, { id: 'j3', text: "2本のペンを", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "have", category: 'does' }, { id: 'e3', text: "two pens", category: 'what' }, { id: 'e4', text: "two pen", category: 'dummy' }]
+                    },
+                    {
+                        id: 2, original: "彼らは学生です。", translation: "They are students.", hint: "主語が複数なら、補語(students)も複数形になります。",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼らは", en: "They" }, does: { jp: "です(=)", en: "are" }, what: { jp: "学生", en: "students" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼らは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "学生", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "They", category: 'who' }, { id: 'e2', text: "are", category: 'does' }, { id: 'e3', text: "students", category: 'what' }, { id: 'e4', text: "student", category: 'dummy' }]
+                    },
+                    {
+                        id: 3, original: "彼は３つの箱を持っています。", translation: "He has three boxes.", hint: "box は x で終わるので es をつけます。",
+                        rows: [{ id: 'main', structure: { who: { jp: "彼は", en: "He" }, does: { jp: "持っています", en: "has" }, what: { jp: "３つの箱を", en: "three boxes" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "持っています", category: 'does' }, { id: 'j3', text: "３つの箱を", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "He", category: 'who' }, { id: 'e2', text: "has", category: 'does' }, { id: 'e3', text: "three boxes", category: 'what' }, { id: 'e4', text: "three boxs", category: 'dummy' }]
+                    }
+                ]
+            },
+            {
+                id: 101, // PDF 1
+                title: "中1英語・be動詞（PDF完全準拠）",
+                description: "PDF『1.be動詞』の全15問。5ステップ学習対応版。",
+                flashcards: [
+                    { id: 1, front: "I am a student.", back: "私は学生です。", hint: "be動詞: am" },
+                    { id: 2, front: "You are Tom.", back: "あなたはトムです。", hint: "be動詞: are" },
+                    { id: 3, front: "He is busy.", back: "彼は忙しい。", hint: "be動詞: is" },
+                    { id: 4, front: "It is an apple.", back: "それはリンゴです。", hint: "an apple (母音の前)" },
+                    { id: 5, front: "She is kind.", back: "彼女は親切だ。", hint: "kind: 親切な" },
+                    { id: 6, front: "This is a pen.", back: "これはペンです。", hint: "This: これ" },
+                    { id: 7, front: "The dog is Bob.", back: "その犬はボブです。", hint: "The dog = It扱い" },
+                    { id: 8, front: "We are doctors.", back: "私たちは医者です。", hint: "複数形 doctors" },
+                    { id: 9, front: "You are teachers.", back: "あなたたちは先生です。", hint: "複数形 teachers" },
+                    { id: 10, front: "They are friends.", back: "彼らは友達です。", hint: "複数形 friends" },
+                    { id: 11, front: "This is Akira.", back: "こちらはアキラです。", hint: "人の紹介も This is" },
+                    { id: 12, front: "That is a book.", back: "あれは本です。", hint: "That: あれ" },
+                    { id: 13, front: "I am from Japan.", back: "私は日本出身です。", hint: "be from: ～出身" },
+                    { id: 14, front: "I am Suzuki Ken.", back: "私はスズキケンです。", hint: "名前を言う" },
+                    { id: 15, front: "They are students.", back: "彼らは学生です。", hint: "複数形 students" }
+                ],
+                questions: [
+                    {
+                        id: 1, original: "私は学生です。", translation: "I am a student.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "です(=)", en: "am" }, what: { jp: "学生", en: "a student" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "学生", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "am", category: 'does' }, { id: 'e3', text: "a student", category: 'what' }, { id: 'e4', text: "are", category: 'dummy' }]
+                    },
+                    {
+                        id: 2, original: "あなたはトムです。", translation: "You are Tom.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "あなたは", en: "You" }, does: { jp: "です(=)", en: "are" }, what: { jp: "トム", en: "Tom" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "あなたは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "トム", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "You", category: 'who' }, { id: 'e2', text: "are", category: 'does' }, { id: 'e3', text: "Tom", category: 'what' }, { id: 'e4', text: "is", category: 'dummy' }]
+                    },
+                    {
+                        id: 3, original: "彼は忙しい。", translation: "He is busy.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼は", en: "He" }, does: { jp: "です(=)", en: "is" }, what: { jp: "忙しい", en: "busy" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "忙しい", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "He", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "busy", category: 'what' }, { id: 'e4', text: "am", category: 'dummy' }]
+                    },
+                    {
+                        id: 4, original: "それはリンゴです。", translation: "It is an apple.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "それは", en: "It" }, does: { jp: "です(=)", en: "is" }, what: { jp: "リンゴ", en: "an apple" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "それは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "リンゴ", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "It", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "an apple", category: 'what' }, { id: 'e4', text: "a apple", category: 'dummy' }]
+                    },
+                    {
+                        id: 5, original: "彼女は親切だ。", translation: "She is kind.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼女は", en: "She" }, does: { jp: "です(=)", en: "is" }, what: { jp: "親切だ", en: "kind" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼女は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "親切だ", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "She", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "kind", category: 'what' }, { id: 'e4', text: "kinds", category: 'dummy' }]
+                    },
+                    {
+                        id: 6, original: "これはペンです。", translation: "This is a pen.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "これは", en: "This" }, does: { jp: "です(=)", en: "is" }, what: { jp: "ペン", en: "a pen" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "これは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "ペン", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "This", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "a pen", category: 'what' }, { id: 'e4', text: "pen", category: 'dummy' }]
+                    },
+                    {
+                        id: 7, original: "その犬はボブです。", translation: "The dog is Bob.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "その犬は", en: "The dog" }, does: { jp: "です(=)", en: "is" }, what: { jp: "ボブ", en: "Bob" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "その犬は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "ボブ", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "The dog", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "Bob", category: 'what' }, { id: 'e4', text: "are", category: 'dummy' }]
+                    },
+                    {
+                        id: 8, original: "私たちは医者です。", translation: "We are doctors.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私たちは", en: "We" }, does: { jp: "です(=)", en: "are" }, what: { jp: "医者", en: "doctors" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私たちは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "医者", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "We", category: 'who' }, { id: 'e2', text: "are", category: 'does' }, { id: 'e3', text: "doctors", category: 'what' }, { id: 'e4', text: "doctor", category: 'dummy' }]
+                    },
+                    {
+                        id: 9, original: "あなたたちは先生です。", translation: "You are teachers.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "あなたたちは", en: "You" }, does: { jp: "です(=)", en: "are" }, what: { jp: "先生", en: "teachers" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "あなたたちは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "先生", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "You", category: 'who' }, { id: 'e2', text: "are", category: 'does' }, { id: 'e3', text: "teachers", category: 'what' }, { id: 'e4', text: "teacher", category: 'dummy' }]
+                    },
+                    {
+                        id: 10, original: "彼らは友達です。", translation: "They are friends.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼らは", en: "They" }, does: { jp: "です(=)", en: "are" }, what: { jp: "友達", en: "friends" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼らは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "友達", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "They", category: 'who' }, { id: 'e2', text: "are", category: 'does' }, { id: 'e3', text: "friends", category: 'what' }, { id: 'e4', text: "friend", category: 'dummy' }]
+                    },
+                    {
+                        id: 11, original: "こちらはアキラです。", translation: "This is Akira.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "こちらは", en: "This" }, does: { jp: "です(=)", en: "is" }, what: { jp: "アキラ", en: "Akira" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "こちらは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "アキラ", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "This", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "Akira", category: 'what' }, { id: 'e4', text: "He", category: 'dummy' }]
+                    },
+                    {
+                        id: 12, original: "あれは本です。", translation: "That is a book.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "あれは", en: "That" }, does: { jp: "です(=)", en: "is" }, what: { jp: "本", en: "a book" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "あれは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "本", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "That", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "a book", category: 'what' }, { id: 'e4', text: "pen", category: 'dummy' }]
+                    },
+                    {
+                        id: 13, original: "私は日本出身です。", translation: "I am from Japan.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "です(=)", en: "am" }, what: { jp: "日本出身", en: "from Japan" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "日本出身", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "am", category: 'does' }, { id: 'e3', text: "from Japan", category: 'what' }, { id: 'e4', text: "Japan", category: 'dummy' }]
+                    },
+                    {
+                        id: 14, original: "私はスズキケンです。", translation: "I am Suzuki Ken.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "です(=)", en: "am" }, what: { jp: "スズキケン", en: "Suzuki Ken" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "スズキケン", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "am", category: 'does' }, { id: 'e3', text: "Suzuki Ken", category: 'what' }, { id: 'e4', text: "Suzuki", category: 'dummy' }]
+                    },
+                    {
+                        id: 15, original: "彼らは学生です。", translation: "They are students.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼らは", en: "They" }, does: { jp: "です(=)", en: "are" }, what: { jp: "学生", en: "students" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼らは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "学生", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "They", category: 'who' }, { id: 'e2', text: "are", category: 'does' }, { id: 'e3', text: "students", category: 'what' }, { id: 'e4', text: "student", category: 'dummy' }]
+                    }
+                ]
+            },
+            {
+                id: 102,
+                title: "中1英語・一般動詞（PDF完全準拠）",
+                description: "PDF『2.一般動詞』の全15問。5ステップ学習対応版。",
+                flashcards: [
+                    { id: 1, front: "I play tennis.", back: "私はテニスをします。", hint: "play = する" },
+                    { id: 2, front: "You like coffee.", back: "あなたはコーヒーが好きです。", hint: "like = 好き" },
+                    { id: 3, front: "He plays soccer.", back: "彼はサッカーをします。", hint: "play -> plays (3単現)" },
+                    { id: 4, front: "She reads books.", back: "彼女は本を読みます。", hint: "read -> reads" },
+                    { id: 5, front: "We speak English.", back: "私たちは英語を話します。", hint: "speak = 話す" },
+                    { id: 6, front: "They run fast.", back: "彼らは速く走ります。", hint: "run = 走る" },
+                    { id: 7, front: "My mother cooks dinner.", back: "私の母は夕食を作ります。", hint: "cook -> cooks" },
+                    { id: 8, front: "I do not play the piano.", back: "私はピアノを弾きません。", hint: "do not play" },
+                    { id: 9, front: "He does not like natto.", back: "彼は納豆が好きではありません。", hint: "does not like" },
+                    { id: 10, front: "Do you like baseball?", back: "あなたは野球が好きですか？", hint: "Start with Do" }
+                ],
+                questions: [
+                    {
+                        id: 21, original: "私はテニスをします。", translation: "I play tennis.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "します", en: "play" }, what: { jp: "テニスを", en: "tennis" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "します", category: 'does' }, { id: 'j3', text: "テニスを", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "play", category: 'does' }, { id: 'e3', text: "tennis", category: 'what' }, { id: 'e4', text: "plays", category: 'does' }],
+                        error: { part: 'does', wrong: "plays", correct: "play", sentenceParts: { who: "I", does: "plays", what: "tennis" } }
+                    },
+                    {
+                        id: 22, original: "あなたはコーヒーが好きです。", translation: "You like coffee.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "あなたは", en: "You" }, does: { jp: "好きです", en: "like" }, what: { jp: "コーヒーが", en: "coffee" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "あなたは", category: 'who' }, { id: 'j2', text: "好きです", category: 'does' }, { id: 'j3', text: "コーヒーが", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "You", category: 'who' }, { id: 'e2', text: "like", category: 'does' }, { id: 'e3', text: "coffee", category: 'what' }, { id: 'e4', text: "likes", category: 'does' }],
+                        error: { part: 'does', wrong: "likes", correct: "like", sentenceParts: { who: "You", does: "likes", what: "coffee" } }
+                    },
+                    {
+                        id: 23, original: "彼はサッカーをします。", translation: "He plays soccer.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼は", en: "He" }, does: { jp: "します", en: "plays" }, what: { jp: "サッカーを", en: "soccer" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "します", category: 'does' }, { id: 'j3', text: "サッカーを", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "He", category: 'who' }, { id: 'e2', text: "plays", category: 'does' }, { id: 'e3', text: "soccer", category: 'what' }, { id: 'e4', text: "play", category: 'does' }],
+                        error: { part: 'does', wrong: "play", correct: "plays", sentenceParts: { who: "He", does: "play", what: "soccer" } }
+                    },
+                    {
+                        id: 24, original: "彼女は本を読みます。", translation: "She reads books.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼女は", en: "She" }, does: { jp: "読みます", en: "reads" }, what: { jp: "本を", en: "books" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼女は", category: 'who' }, { id: 'j2', text: "読みます", category: 'does' }, { id: 'j3', text: "本を", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "She", category: 'who' }, { id: 'e2', text: "reads", category: 'does' }, { id: 'e3', text: "books", category: 'what' }, { id: 'e4', text: "read", category: 'does' }],
+                        error: { part: 'does', wrong: "read", correct: "reads", sentenceParts: { who: "She", does: "read", what: "books" } }
+                    },
+                    {
+                        id: 25, original: "私たちは英語を話します。", translation: "We speak English.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私たちは", en: "We" }, does: { jp: "話します", en: "speak" }, what: { jp: "英語を", en: "English" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私たちは", category: 'who' }, { id: 'j2', text: "話します", category: 'does' }, { id: 'j3', text: "英語を", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "We", category: 'who' }, { id: 'e2', text: "speak", category: 'does' }, { id: 'e3', text: "English", category: 'what' }, { id: 'e4', text: "speaks", category: 'does' }],
+                        error: { part: 'does', wrong: "speaks", correct: "speak", sentenceParts: { who: "We", does: "speaks", what: "English" } }
+                    },
+                    {
+                        id: 26, original: "彼らは速く走ります。", translation: "They run fast.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼らは", en: "They" }, does: { jp: "走ります", en: "run" }, what: null, where: null, when: { jp: "速く", en: "fast" } } }],
+                        jpOptions: [{ id: 'j1', text: "彼らは", category: 'who' }, { id: 'j2', text: "走ります", category: 'does' }, { id: 'j3', text: "速く", category: 'when' }],
+                        enOptions: [{ id: 'e1', text: "They", category: 'who' }, { id: 'e2', text: "run", category: 'does' }, { id: 'e3', text: "fast", category: 'when' }, { id: 'e4', text: "runs", category: 'does' }],
+                        error: { part: 'does', wrong: "runs", correct: "run", sentenceParts: { who: "They", does: "runs", when: "fast" } }
+                    },
+                    {
+                        id: 27, original: "私の母は夕食を作ります。", translation: "My mother cooks dinner.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私の母は", en: "My mother" }, does: { jp: "作ります", en: "cooks" }, what: { jp: "夕食を", en: "dinner" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私の母は", category: 'who' }, { id: 'j2', text: "作ります", category: 'does' }, { id: 'j3', text: "夕食を", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "My mother", category: 'who' }, { id: 'e2', text: "cooks", category: 'does' }, { id: 'e3', text: "dinner", category: 'what' }, { id: 'e4', text: "cook", category: 'does' }],
+                        error: { part: 'does', wrong: "cook", correct: "cooks", sentenceParts: { who: "My mother", does: "cook", what: "dinner" } }
+                    },
+                    {
+                        id: 28, original: "私はピアノを弾きません。", translation: "I do not play the piano.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "弾きません", en: "do not play" }, what: { jp: "ピアノを", en: "the piano" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "弾きません", category: 'does' }, { id: 'j3', text: "ピアノを", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "do not play", category: 'does' }, { id: 'e3', text: "the piano", category: 'what' }, { id: 'e4', text: "does not play", category: 'does' }],
+                        error: { part: 'does', wrong: "does not play", correct: "do not play", sentenceParts: { who: "I", does: "does not play", what: "the piano" } }
+                    },
+                    {
+                        id: 29, original: "彼は納豆が好きではありません。", translation: "He does not like natto.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼は", en: "He" }, does: { jp: "好きではありません", en: "does not like" }, what: { jp: "納豆が", en: "natto" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "好きではありません", category: 'does' }, { id: 'j3', text: "納豆が", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "He", category: 'who' }, { id: 'e2', text: "does not like", category: 'does' }, { id: 'e3', text: "natto", category: 'what' }, { id: 'e4', text: "do not like", category: 'does' }],
+                        error: { part: 'does', wrong: "do not like", correct: "does not like", sentenceParts: { who: "He", does: "do not like", what: "natto" } }
+                    },
+                    {
+                        id: 30, original: "あなたは野球が好きですか？", translation: "Do you like baseball?",
+                        rows: [{ id: 'm1', structure: { who: { jp: "あなたは", en: "you" }, does: { jp: "好きですか", en: "Do ... like" }, what: { jp: "野球が", en: "baseball" }, where: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "あなたは", category: 'who' }, { id: 'j2', text: "好きですか", category: 'does' }, { id: 'j3', text: "野球が", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "you", category: 'who' }, { id: 'e2', text: "Do ... like", category: 'does' }, { id: 'e3', text: "baseball", category: 'what' }],
+                        error: { part: 'does_pre', wrong: "Are", correct: "Do", sentenceParts: { does_pre: "Are", who: "you", does: "like", what: "baseball" } }
+                    }
+                ]
+            },
+            {
+                id: 2026022401,
+                title: "中1英語・名詞/冠詞の使い方",
+                description: "名詞と冠詞(a/an/the)を語順で定着させるステージ。",
+                stepOrder: ['flashcard', 'sort', 'fillin', 'complete'],
+                flashcards: [
+                    { id: 1, front: "名詞の意味は？", back: "①「人やモノやコトの名前」\n②「だれが、や、だれ・なにの位置に入る言葉」", hint: "名詞は名前であり、文の主要ポジションにも入ります" },
+                    { id: 2, front: "「彼女の（ ）は天下一品だ」で入るのは？理由は？", back: "「美しさ」。理由は、主語の位置に入るのは名詞だから（「美しい」は名詞ではない）。", hint: "主語に置ける品詞かどうかで判断します" },
+                    { id: 3, front: "名詞を大きく2種類に分けると？", back: "「固有名詞」と「普通の名詞」", hint: "名前そのものか、一般名詞かで分かれます" },
+                    { id: 4, front: "「固有名詞」はどんな階級？", back: "超特権階級（ワンピースの天竜人やドラゴンボールの界王神レベル）", hint: "特別扱いされる名詞です" },
+                    { id: 5, front: "固有名詞（Japanなど）の大きな特徴は？", back: "丸裸（何もつけない状態）で堂々と歩けること。", hint: "冠詞なしでそのまま使えます" },
+                    { id: 6, front: "固有名詞を書く時、最初の文字は？", back: "大文字で書く", hint: "英語表記ルールです" },
+                    { id: 7, front: "普通の名詞（apple, bookなど）はどんな階級？", back: "下々の庶民（一般庶民）", hint: "そのままでは使えない名詞です" },
+                    { id: 8, front: "普通の名詞は「丸裸（単体）」で使える？", back: "できない。a/anを前につけたり、複数形のsを後ろにつけたりする必要がある。", hint: "普通名詞は何かをつけて使います" },
+                    { id: 9, front: "a / an の歴史的な由来（元の意味）の数字は？", back: "1（one）", hint: "a/an は「ひとつ」の感覚です" },
+                    { id: 10, front: "a / an の持つイメージは？", back: "「なんでもいいからとりあえず1つの」", hint: "特定しない1つです" },
+                    { id: 11, front: "a と an の使い分けルールは？", back: "直後の名詞の発音が子音なら a、母音なら an。", hint: "スペルより発音で判断します" },
+                    { id: 12, front: "hour につくのは a / an？理由は？", back: "an hour。スペルはhだが発音が母音から始まるため。", hint: "発音は「アワー」" },
+                    { id: 13, front: "university につくのは a / an？理由は？", back: "a university。発音が「ユ」で始まり母音発音ではないため。", hint: "発音は「ユニバーシティ」" },
+                    { id: 14, front: "the のコアイメージは？", back: "その場にいる人全員が「せーの」で1つに決まる感覚。", hint: "共通認識の1つです" },
+                    { id: 15, front: "sun / moon に the がつく理由は？", back: "みんなが見て同じ1つに決まるから。", hint: "唯一性が高い名詞です" },
+                    { id: 16, front: "the は必ず「その〜」と訳す必要がある？", back: "訳さなくてよい。英語の感覚として the がつく。", hint: "日本語訳より英語の感覚を優先します" },
+                    { id: 17, front: "star には基本的に the がつく？理由は？", back: "つかないことが多い。星は多く、1つに特定しにくいから。", hint: "1つに決まるかどうかが鍵です" },
+                    { id: 18, front: "「Open the door.」と言えるのはどんな状況？", back: "相手が「どのドアか」を1つに特定できる状況。", hint: "部屋にドアが1つなど" },
+                    { id: 19, front: "「I have a dog.」の次は「( ) dog is...」のどれ？理由は？", back: "The。すでに話題に出た犬で、聞き手と話し手の間で1つに決まるから。", hint: "2回目の登場は the になりやすいです" }
+                ],
+                fillInQuestions: [
+                    { id: 1, prompt: "I have ( ) dog.", translation: "（私は犬を1匹飼っています）", answer: "a" },
+                    { id: 2, prompt: "This is ( ) apple.", translation: "（これは1つのりんごです）", answer: "an" },
+                    { id: 3, prompt: "Look at ( ) sun.", translation: "（太陽を見て）", answer: "the" },
+                    { id: 4, prompt: "Open ( ) door, please.", translation: "（ドアを開けてください ※部屋にドアは1つだけ）", answer: "the" },
+                    { id: 5, prompt: "I play tennis for ( ) hour.", translation: "（私は1時間テニスをします ※hourの発音はアワー）", answer: "an" },
+                    { id: 6, prompt: "He goes to ( ) university.", translation: "（彼は大学に通っています ※universityの発音はユニバーシティ）", answer: "a" },
+                    { id: 7, prompt: "I have a cat. ( ) cat is cute.", translation: "（私は猫を飼っています。その猫は可愛いです）", answer: "The" },
+                    { id: 8, prompt: "She is ( ) English teacher.", translation: "（彼女は英語の先生です）", answer: "an" },
+                    { id: 9, prompt: "Look at ( ) moon.", translation: "（月を見て）", answer: "the" }
+                ],
+                questions: [
+                    {
+                        id: 1, original: "私は犬を1匹飼っています", translation: "I have a dog.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "飼っています", en: "have" }, what: { jp: "犬を1匹", en: "a dog" }, where: null, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "飼っています", category: 'does' }, { id: 'j3', text: "犬を1匹", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "have", category: 'does' }, { id: 'e3', text: "a dog", category: 'what' }]
+                    },
+                    {
+                        id: 2, original: "これは1つのりんごです", translation: "This is an apple.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "これは", en: "This" }, does: { jp: "です(=)", en: "is" }, what: { jp: "1つのりんご", en: "an apple" }, where: null, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "これは", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "1つのりんご", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "This", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "an apple", category: 'what' }]
+                    },
+                    {
+                        id: 4, original: "私は1時間テニスをします", translation: "I play tennis for an hour.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "します", en: "play" }, what: { jp: "テニスを", en: "tennis" }, where: null, how: null, when: { jp: "1時間", en: "for an hour" } } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "します", category: 'does' }, { id: 'j3', text: "テニスを", category: 'what' }, { id: 'j4', text: "1時間", category: 'when' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "play", category: 'does' }, { id: 'e3', text: "tennis", category: 'what' }, { id: 'e4', text: "for an hour", category: 'when' }]
+                    },
+                    {
+                        id: 5, original: "彼は大学に通っています", translation: "He goes to a university.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼は", en: "He" }, does: { jp: "通っています", en: "goes" }, what: null, where: { jp: "大学に", en: "to a university" }, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼は", category: 'who' }, { id: 'j2', text: "通っています", category: 'does' }, { id: 'j3', text: "大学に", category: 'where' }],
+                        enOptions: [{ id: 'e1', text: "He", category: 'who' }, { id: 'e2', text: "goes", category: 'does' }, { id: 'e3', text: "to a university", category: 'where' }]
+                    },
+                    {
+                        id: 6, original: "私は日本に住んでいます", translation: "I live in Japan.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "住んでいます", en: "live" }, what: null, where: { jp: "日本に", en: "in Japan" }, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "住んでいます", category: 'does' }, { id: 'j3', text: "日本に", category: 'where' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "live", category: 'does' }, { id: 'e3', text: "in Japan", category: 'where' }]
+                    },
+                    {
+                        id: 7, original: "私は猫を飼っています。その猫は可愛いです", translation: "I have a cat. The cat is cute.",
+                        rows: [
+                            { id: 'm1', structure: { who: { jp: "私は", en: "I" }, does: { jp: "飼っています", en: "have" }, what: { jp: "猫を", en: "a cat" }, where: null, how: null, when: null } },
+                            { id: 'm2', structure: { who: { jp: "その猫は", en: "The cat" }, does: { jp: "です(=)", en: "is" }, what: { jp: "可愛い", en: "cute" }, where: null, how: null, when: null } }
+                        ],
+                        jpOptions: [{ id: 'j1', text: "私は", category: 'who' }, { id: 'j2', text: "飼っています", category: 'does' }, { id: 'j3', text: "猫を", category: 'what' }, { id: 'j4', text: "その猫は", category: 'who' }, { id: 'j5', text: "です(=)", category: 'does' }, { id: 'j6', text: "可愛い", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "I", category: 'who' }, { id: 'e2', text: "have", category: 'does' }, { id: 'e3', text: "a cat", category: 'what' }, { id: 'e4', text: "The cat", category: 'who' }, { id: 'e5', text: "is", category: 'does' }, { id: 'e6', text: "cute", category: 'what' }]
+                    },
+                    {
+                        id: 8, original: "彼女は英語の先生です", translation: "She is an English teacher.",
+                        rows: [{ id: 'm1', structure: { who: { jp: "彼女は", en: "She" }, does: { jp: "です(=)", en: "is" }, what: { jp: "英語の先生", en: "an English teacher" }, where: null, how: null, when: null } }],
+                        jpOptions: [{ id: 'j1', text: "彼女は", category: 'who' }, { id: 'j2', text: "です(=)", category: 'does' }, { id: 'j3', text: "英語の先生", category: 'what' }],
+                        enOptions: [{ id: 'e1', text: "She", category: 'who' }, { id: 'e2', text: "is", category: 'does' }, { id: 'e3', text: "an English teacher", category: 'what' }]
+                    }
+                ]
+            },
+            {
+                id: 2026022502,
+                title: "所有格と形容詞",
+                stepOrder: ['flashcard', 'instant', 'fillin', 'writing', 'complete'],
+                flashcards: [
+                    { id: 1, front: "固有名詞以外の普通の名詞は単体で使えないため、どうしなければならないか？", back: "必ず前になにか言葉をつけてあげないといけない", hint: "普通名詞は丸裸で使えません" },
+                    { id: 2, front: "所有格とは、どのような意味を表す言葉か？", back: "誰のものかを表す\n「〜の」（私の、あなたの、彼の、彼女の、それらのなど）", hint: "所有格は ownership を表します" },
+                    { id: 3, front: "所有格の正しい覚え方は？", back: "my pen, your desk のように、後ろの言葉と必ず1セットで覚えてしまうこと", hint: "所有格は後ろの名詞とセット" },
+                    { id: 4, front: "わたしのねこ", back: "my cat", hint: "my + 名詞" },
+                    { id: 5, front: "あなたのねこ", back: "your cat", hint: "your + 名詞" },
+                    { id: 6, front: "彼のねこ", back: "his cat", hint: "his + 名詞" },
+                    { id: 7, front: "彼女のねこ", back: "her cat", hint: "her + 名詞" },
+                    { id: 8, front: "私たちのねこ", back: "our cat", hint: "our + 名詞" },
+                    { id: 9, front: "彼らのねこ", back: "their cat", hint: "their + 名詞" },
+                    { id: 10, front: "彼女らのねこ", back: "their cat", hint: "their + 名詞" },
+                    { id: 11, front: "それらのねこ", back: "their cat", hint: "their + 名詞" },
+                    { id: 12, front: "彼らの、彼女らの、それらの", back: "their", hint: "複数の「〜の」は their" },
+                    { id: 13, front: "「あしだのねこ」のように、人の名前に「〜の」をつける場合、どう表すか？", back: "人の名前の後ろに「'」をつけ、その後に「s」をつける。\nAshida's cat", hint: "名前 + 's + 名詞" },
+                    { id: 14, front: "this と that の意味をそれぞれ答えよ。", back: "this＝「この、これ」\nthat＝「あの、あれ」", hint: "近い this / 遠い that" },
+                    { id: 15, front: "このねこ", back: "this cat", hint: "this + 名詞" },
+                    { id: 16, front: "あのねこ", back: "that cat", hint: "that + 名詞" },
+                    { id: 17, front: "形容詞とは、どのような働きをする言葉か？", back: "名詞を詳しく説明する言葉", hint: "名詞を説明する語" },
+                    { id: 18, front: "形容詞は、どこにくっつける言葉か？", back: "名詞の前", hint: "英語は形容詞を前に置く" },
+                    { id: 19, front: "形容詞の「old」の意味は？", back: "古い", hint: "old = 古い" },
+                    { id: 20, front: "形容詞の「big」の意味は？", back: "大きな", hint: "big = 大きな" },
+                    { id: 21, front: "形容詞の「good」の意味は？", back: "良い", hint: "good = 良い" },
+                    { id: 22, front: "形容詞の「bad」の意味は？", back: "悪い", hint: "bad = 悪い" },
+                    { id: 23, front: "形容詞の「happy」の意味は？", back: "幸せな", hint: "happy = 幸せな" },
+                    { id: 24, front: "形容詞の「new」の意味は？", back: "新しい", hint: "new = 新しい" },
+                    { id: 25, front: "形容詞の「busy」の意味は？", back: "忙しい", hint: "busy = 忙しい" },
+                    { id: 26, front: "形容詞の「kind」の意味は？", back: "親切な", hint: "kind = 親切な" },
+                    { id: 27, front: "「私の古い家」を英語にする際の正しい語順とフレーズを答えよ。", back: "所有格 + 形容詞 + 名詞（my old house）", hint: "my / old / house の順" },
+                    { id: 28, front: "「この新しい車」を英語で答えよ。", back: "this new car", hint: "this + new + car" },
+                    { id: 29, front: "「その大きなカバン」を英語で答えよ。", back: "the big bag", hint: "the + big + bag" },
+                    { id: 30, front: "「一人の良い先生」を英語で答えよ。", back: "a good teacher", hint: "a + good + teacher" }
+                ],
+                instantQuestions: [
+                    { id: 1, jp: "わたしのねこ", answer: "my cat" },
+                    { id: 2, jp: "あなたのねこ", answer: "your cat" },
+                    { id: 3, jp: "彼のねこ", answer: "his cat" },
+                    { id: 4, jp: "彼女のねこ", answer: "her cat" },
+                    { id: 5, jp: "私たちのねこ", answer: "our cat" },
+                    { id: 6, jp: "彼らのねこ", answer: "their cat" },
+                    { id: 7, jp: "彼女らのねこ", answer: "their cat" },
+                    { id: 8, jp: "それらのねこ", answer: "their cat" },
+                    { id: 9, jp: "この新しい車", answer: "this new car" },
+                    { id: 10, jp: "あの新しい車", answer: "that new car" },
+                    { id: 11, jp: "新しい車", answer: "a new car" },
+                    { id: 12, jp: "私の新しい車", answer: "my new car" },
+                    { id: 13, jp: "それらの新しい車", answer: "thier new car" },
+                    { id: 14, jp: "その新しい車", answer: "the new car" },
+                    { id: 15, jp: "わたしの車", answer: "my car" },
+                    { id: 16, jp: "あなたの家", answer: "your house" },
+                    { id: 17, jp: "彼のお父さん", answer: "his father" },
+                    { id: 18, jp: "彼女のペン", answer: "her pen" },
+                    { id: 19, jp: "私たちのチーム", answer: "our team" },
+                    { id: 20, jp: "彼らの自転車", answer: "their bicycle" },
+                    { id: 21, jp: "このノート", answer: "this notebook" },
+                    { id: 22, jp: "あの男の子", answer: "that boy" },
+                    { id: 23, jp: "わたしの古い家", answer: "my old house" },
+                    { id: 24, jp: "（1つの）リンゴ", answer: "an apple" },
+                    { id: 25, jp: "1時間", answer: "an hour" },
+                    { id: 26, jp: "そのドア", answer: "the door" },
+                    { id: 27, jp: "（1冊の）本", answer: "a book" },
+                    { id: 28, jp: "そのイス", answer: "the chair" },
+                    { id: 29, jp: "その大きなカバン", answer: "the big bag" },
+                    { id: 30, jp: "（1人の）良い先生", answer: "a good teacher" },
+                    { id: 31, jp: "（1匹の）イヌ", answer: "a dog" },
+                    { id: 32, jp: "（1戸の）家", answer: "a house" },
+                    { id: 33, jp: "（1人の）英語の先生", answer: "an English teacher" },
+                    { id: 34, jp: "（1人の）サッカー選手", answer: "a soccer player" }
+                ],
+                fillInQuestions: [
+                    { id: 1, translation: "わたしのねこ", prompt: "( ) cat", answer: "my" },
+                    { id: 2, translation: "あなたのねこ", prompt: "( ) cat", answer: "your" },
+                    { id: 3, translation: "彼のねこ", prompt: "( ) cat", answer: "his" },
+                    { id: 4, translation: "彼女のねこ", prompt: "( ) cat", answer: "her" },
+                    { id: 5, translation: "私たちのねこ", prompt: "( ) cat", answer: "our" },
+                    { id: 6, translation: "彼らのねこ", prompt: "( ) cat", answer: "their" },
+                    { id: 7, translation: "彼女らのねこ", prompt: "( ) cat", answer: "their" },
+                    { id: 8, translation: "それらのねこ", prompt: "( ) cat", answer: "their" },
+                    { id: 9, translation: "わたしの車", prompt: "( ) car", answer: "my" },
+                    { id: 10, translation: "このねこ", prompt: "( ) cat", answer: "this" },
+                    { id: 11, translation: "あのねこ", prompt: "( ) cat", answer: "that" },
+                    { id: 12, translation: "そのねこ", prompt: "( ) cat", answer: "the" },
+                    { id: 13, translation: "新しい車", prompt: "( ) ( ) car", answer: "a new" },
+                    { id: 14, translation: "私の新しい車", prompt: "( ) ( ) car", answer: "my new" },
+                    { id: 15, translation: "それらの新しい車", prompt: "( ) ( ) car", answer: "thier new" },
+                    { id: 16, translation: "その新しい車", prompt: "( ) ( ) car", answer: "the new" },
+                    { id: 17, translation: "この新しい車", prompt: "( ) ( ) car", answer: "this new" },
+                    { id: 18, translation: "あの新しい車", prompt: "( ) ( ) car", answer: "that new" },
+                    { id: 19, translation: "あなたの家", prompt: "( ) house", answer: "your" },
+                    { id: 20, translation: "彼のお父さん", prompt: "( ) father", answer: "his" },
+                    { id: 21, translation: "彼女のペン", prompt: "( ) pen", answer: "her" },
+                    { id: 22, translation: "私たちのチーム", prompt: "( ) team", answer: "our" },
+                    { id: 23, translation: "彼らの自転車", prompt: "( ) bicycle", answer: "their" },
+                    { id: 24, translation: "このノート", prompt: "( ) notebook", answer: "this" },
+                    { id: 25, translation: "あの男の子", prompt: "( ) boy", answer: "that" },
+                    { id: 26, translation: "わたしの古い家", prompt: "( ) ( ) house", answer: "my old" },
+                    { id: 27, translation: "この新しい車", prompt: "( ) ( ) car", answer: "this new" },
+                    { id: 28, translation: "(1つの) リンゴ", prompt: "( ) apple", answer: "an" },
+                    { id: 29, translation: "1時間", prompt: "( ) hour", answer: "an" },
+                    { id: 30, translation: "そのドア", prompt: "( ) door", answer: "the" },
+                    { id: 31, translation: "(1冊の)本", prompt: "( ) book", answer: "a" },
+                    { id: 32, translation: "そのイス", prompt: "( ) chair", answer: "the" },
+                    { id: 33, translation: "その大きなカバン", prompt: "( ) ( ) bag", answer: "the big" },
+                    { id: 34, translation: "(1人の)良い先生", prompt: "( ) ( ) teacher", answer: "a good" },
+                    { id: 35, translation: "(1匹の)イヌ", prompt: "( ) dog", answer: "a" },
+                    { id: 36, translation: "(1戸の)家", prompt: "( ) ( )", answer: "a house" },
+                    { id: 37, translation: "(1人の)英語の先生", prompt: "( ) ( ) ( )", answer: "an English teacher" },
+                    { id: 38, translation: "(1人の)サッカー選手", prompt: "( ) ( ) ( )", answer: "a soccer player" }
+                ],
+                writingQuestions: [
+                    { id: 1, jp: "わたしのねこ", answer: "my cat" },
+                    { id: 2, jp: "あなたのねこ", answer: "your cat" },
+                    { id: 3, jp: "彼のねこ", answer: "his cat" },
+                    { id: 4, jp: "彼女のねこ", answer: "her cat" },
+                    { id: 5, jp: "私たちのねこ", answer: "our cat" },
+                    { id: 6, jp: "彼らのねこ", answer: "their cat" },
+                    { id: 7, jp: "彼女らのねこ", answer: "their cat" },
+                    { id: 8, jp: "それらのねこ", answer: "their cat" },
+                    { id: 9, jp: "この新しい車", answer: "this new car" },
+                    { id: 10, jp: "あの新しい車", answer: "that new car" },
+                    { id: 11, jp: "新しい車", answer: "a new car" },
+                    { id: 12, jp: "私の新しい車", answer: "my new car" },
+                    { id: 13, jp: "それらの新しい車", answer: "thier new car" },
+                    { id: 14, jp: "その新しい車", answer: "the new car" },
+                    { id: 15, jp: "わたしの車", answer: "my car" },
+                    { id: 16, jp: "あなたの家", answer: "your house" },
+                    { id: 17, jp: "彼のお父さん", answer: "his father" },
+                    { id: 18, jp: "彼女のペン", answer: "her pen" },
+                    { id: 19, jp: "私たちのチーム", answer: "our team" },
+                    { id: 20, jp: "彼らの自転車", answer: "their bicycle" },
+                    { id: 21, jp: "このノート", answer: "this notebook" },
+                    { id: 22, jp: "あの男の子", answer: "that boy" },
+                    { id: 23, jp: "わたしの古い家", answer: "my old house" },
+                    { id: 24, jp: "（1つの）リンゴ", answer: "an apple" },
+                    { id: 25, jp: "1時間", answer: "an hour" },
+                    { id: 26, jp: "そのドア", answer: "the door" },
+                    { id: 27, jp: "（1冊の）本", answer: "a book" },
+                    { id: 28, jp: "そのイス", answer: "the chair" },
+                    { id: 29, jp: "その大きなカバン", answer: "the big bag" },
+                    { id: 30, jp: "（1人の）良い先生", answer: "a good teacher" },
+                    { id: 31, jp: "（1匹の）イヌ", answer: "a dog" },
+                    { id: 32, jp: "（1戸の）家", answer: "a house" },
+                    { id: 33, jp: "（1人の）英語の先生", answer: "an English teacher" },
+                    { id: 34, jp: "（1人の）サッカー選手", answer: "a soccer player" }
+                ],
+                questions: []
+            }
+        ];
+
+
+
+        // ========== ICONS ==========
+        const IconBase = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+        const Brain = (props) => <IconBase {...props}><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18" /><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18" /><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" /><path d="M17.599 6.5a3 3 0 0 0 .399-1.375" /><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" /><path d="M3.477 10.896a4 4 0 0 1 .585-.396" /><path d="M19.938 10.5a4 4 0 0 1 .585.396" /><path d="M6 18a4 4 0 0 1-1.967-.516" /><path d="M19.967 17.484A4 4 0 0 1 18 18" /></IconBase>;
+        const Layers = (props) => <IconBase {...props}><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></IconBase>;
+        const ThumbsUp = (props) => <IconBase {...props}><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" /><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></IconBase>;
+        const ThumbsDown = (props) => <IconBase {...props}><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z" /><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17" /></IconBase>;
+        const RotateCcw = (props) => <IconBase {...props}><path d="M1 4v6h6" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" /></IconBase>;
+        const AlertTriangle = (props) => <IconBase {...props}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></IconBase>;
+        const HelpCircle = (props) => <IconBase {...props}><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></IconBase>;
+        const ArrowRight = (props) => <IconBase {...props}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></IconBase>;
+        const BookOpen = (props) => <IconBase {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></IconBase>;
+        const ChevronRight = (props) => <IconBase {...props}><polyline points="9 18 15 12 9 6" /></IconBase>;
+        const CheckCircle = (props) => <IconBase {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></IconBase>;
+
+        const speakEnglish = (text) => {
+            if (!text || typeof window === "undefined") return;
+            const synth = window.speechSynthesis;
+            if (!synth || typeof SpeechSynthesisUtterance === "undefined") return;
+            try {
+                const voices = synth.getVoices();
+                const voice = voices.find(v => v.lang === "en-US")
+                    || voices.find(v => v.lang && v.lang.startsWith("en-"))
+                    || voices.find(v => v.lang && v.lang.startsWith("en"))
+                    || null;
+
+                const utterance = new SpeechSynthesisUtterance(String(text));
+                utterance.lang = "en-US";
+                utterance.rate = 0.95;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                if (voice) utterance.voice = voice;
+
+                synth.cancel();
+                synth.resume();
+                synth.speak(utterance);
+            } catch (e) {
+                // No-op: avoid crashing UI if speech API fails on a browser.
+            }
+        };
+
+        // ========== FOLDERS CONFIG ==========
+        const FOLDERS = [
+            { key: 'who', label: 'だれが', color: 'bg-pink-100 border-pink-300 text-pink-900' },
+            { key: 'does', label: 'する(です)', color: 'bg-green-100 border-green-300 text-green-900' },
+            { key: 'what', label: 'だれ・なに', color: 'bg-blue-100 border-blue-300 text-blue-900' },
+            { key: 'where', label: 'どこ', color: 'bg-yellow-100 border-yellow-300 text-yellow-900' },
+            { key: 'how', label: '状態(状)', color: 'bg-orange-100 border-orange-300 text-orange-900' },
+            { key: 'when', label: 'いつ', color: 'bg-purple-100 border-purple-300 text-purple-900' },
+        ];
+
+        // ========== COURSE SELECTION ==========
+        const CourseSelect = ({ onSelect }) => (
+            <div className="animate-fade-in max-w-2xl mx-auto p-4">
+                <h1 className="text-3xl font-bold text-center text-indigo-900 mb-2">イミジュントレーニング</h1>
+                <p className="text-center text-slate-500 mb-8">Step 2・3 抽出版</p>
+                <div className="space-y-3">
+                    {COURSES.map(course => (
+                        <button
+                            key={course.id}
+                            onClick={() => onSelect(course)}
+                            className="w-full bg-white p-5 rounded-xl shadow-md border border-slate-200 hover:border-indigo-400 hover:shadow-lg transition flex items-center justify-between group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <BookOpen className="text-indigo-500" size={24} />
+                                <span className="font-bold text-slate-800 text-left">{course.title}</span>
+                            </div>
+                            <ChevronRight className="text-slate-400 group-hover:text-indigo-500 transition" />
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+
+        // ========== STEP 2: FLASHCARD ==========
+        const FlashcardStep = ({ flashcards, onComplete }) => {
+            const [studyQueue, setStudyQueue] = useState([...flashcards]);
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [resetMessage, setResetMessage] = useState("");
+            const currentCard = studyQueue.length > 0 ? studyQueue[0] : null;
+
+            useEffect(() => {
+                if (studyQueue.length === 0 && flashcards.length > 0) onComplete();
+            }, [studyQueue]);
+
+            if (!currentCard) return null;
+
+            const handleKnown = (e) => { e.stopPropagation(); setIsFlipped(false); setStudyQueue(prev => prev.slice(1)); };
+            const handleUnknown = (e) => {
+                e.stopPropagation(); setIsFlipped(false);
+                setResetMessage("😱 最初からやり直し！");
+                setTimeout(() => setResetMessage(""), 2000);
+                setStudyQueue([...flashcards]);
+            };
+
+            return (
+                <div className="flex flex-col items-center animate-fade-in max-w-2xl mx-auto w-full relative p-4">
+                    <div className="flex justify-between w-full items-center mb-4">
+                        <h3 className="text-xl font-bold text-indigo-900 flex items-center gap-2"><Brain className="text-indigo-500" /> 一問一答</h3>
+                        <button onClick={onComplete} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Step</button>
+                    </div>
+                    {resetMessage && (
+                        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-white/80 rounded-xl backdrop-blur-sm animate-bounce">
+                            <div className="bg-red-500 text-white px-6 py-4 rounded-xl shadow-xl font-bold text-lg flex items-center gap-2"><AlertTriangle /> {resetMessage}</div>
+                        </div>
+                    )}
+                    <div className="w-full bg-slate-200 rounded-full h-2 mb-6 overflow-hidden"><div className="bg-green-500 h-full transition-all duration-500" style={{ width: `${((flashcards.length - studyQueue.length) / flashcards.length) * 100}%` }}></div></div>
+                    <p className="text-slate-500 text-sm mb-4">連続正解: <span className="font-bold text-indigo-600">{flashcards.length - studyQueue.length}</span> / {flashcards.length}</p>
+                    <div className="w-full h-80 cursor-pointer group mb-8" onClick={() => setIsFlipped(!isFlipped)}>
+                        {!isFlipped ? (
+                            <div className="w-full h-full bg-white border-2 border-indigo-100 rounded-2xl shadow-xl flex flex-col items-center justify-center p-8 text-center hover:border-indigo-300 transition-colors relative">
+                                <span className="absolute top-4 left-4 bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">Question</span>
+                                <h4 className="text-2xl font-bold text-slate-800">{currentCard.front}</h4>
+                                <p className="text-slate-400 text-sm mt-8 flex items-center gap-2"><RotateCcw size={14} /> タップして答えを見る</p>
+                            </div>
+                        ) : (
+                            <div className="w-full h-full bg-indigo-600 text-white rounded-2xl shadow-xl flex flex-col items-center justify-center p-8 text-center relative">
+                                <span className="absolute top-4 left-4 bg-white/20 px-3 py-1 rounded-full text-xs font-bold">Answer</span>
+                                <div className="text-xl font-bold whitespace-pre-wrap leading-relaxed">{currentCard.back}</div>
+                                <div className="mt-6 pt-4 border-t border-white/20 text-sm text-indigo-100 w-full">Hint: {currentCard.hint}</div>
+                            </div>
+                        )}
+                    </div>
+                    {isFlipped ? (
+                        <div className="flex gap-4 w-full">
+                            <button onClick={handleUnknown} className="flex-1 bg-red-100 text-red-600 py-4 rounded-xl font-bold flex flex-col items-center hover:bg-red-200 active:scale-95 transition"><ThumbsDown size={24} className="mb-1" /><span className="text-xs">最初から</span></button>
+                            <button onClick={handleKnown} className="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold flex flex-col items-center hover:bg-indigo-700 active:scale-95 transition shadow-lg"><ThumbsUp size={24} className="mb-1" /><span className="text-xs">覚えた！</span></button>
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 text-sm mt-4 h-16 flex items-center">答えを確認してください</p>
+                    )}
+                </div>
+            );
+        };
+
+
+        // ========== STEP 2: FILL-IN ==========
+        const FillInStep = ({ questions, fillInQuestions, onComplete }) => {
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [feedback, setFeedback] = useState("");
+            const [isCorrect, setIsCorrect] = useState(false);
+            const hasCustomFillIn = Array.isArray(fillInQuestions) && fillInQuestions.length > 0;
+            const activeQuestions = hasCustomFillIn ? fillInQuestions : questions;
+            const currentQ = activeQuestions[currentQIndex];
+            const totalQuestions = activeQuestions.length;
+            const rawCustomTranslation = hasCustomFillIn ? (currentQ?.translation || "").trim() : "";
+            const wrappedTranslation = rawCustomTranslation.match(/^[（(]\s*([\s\S]*?)\s*[）)]$/);
+            const customTranslationText = wrappedTranslation ? wrappedTranslation[1] : rawCustomTranslation;
+
+            // Target the 'does' part (or other parts if configured)
+            const targetRow = hasCustomFillIn ? null : currentQ?.rows?.[0];
+            const targetPart = 'does';
+            const answerFull = hasCustomFillIn
+                ? (currentQ?.answer || "")
+                : (targetRow?.structure?.[targetPart]?.en || "");
+
+            // Analyze answer for split pattern (e.g., "Do ... like")
+            const { preWords, postWords, allWords } = useMemo(() => {
+                const isSplit = answerFull.includes("...");
+                let pre = [];
+                let post = [];
+
+                if (isSplit) {
+                    const parts = answerFull.split("...");
+                    if (parts[0]) pre = parts[0].trim().split(/\s+/);
+                    if (parts[1]) post = parts[1].trim().split(/\s+/);
+                } else {
+                    const trimmed = answerFull.trim();
+                    post = trimmed ? trimmed.split(/\s+/) : [];
+                }
+
+                return {
+                    preWords: pre,
+                    postWords: post,
+                    allWords: [...pre, ...post]
+                };
+            }, [answerFull]);
+
+            // State for multiple inputs
+            const [inputValues, setInputValues] = useState([]);
+
+            // Initialize inputs when question changes
+            useEffect(() => {
+                setInputValues(new Array(allWords.length).fill(""));
+                setFeedback("");
+                setIsCorrect(false);
+
+                // Focus first input after render
+                setTimeout(() => {
+                    const firstInput = document.getElementById('fill-input-0');
+                    if (firstInput) firstInput.focus();
+                }, 100);
+            }, [currentQIndex, allWords.length]);
+
+            const handleInputChange = (index, val) => {
+                const newInputs = [...inputValues];
+                newInputs[index] = val;
+                setInputValues(newInputs);
+            };
+
+            const nextQuestion = () => {
+                if (currentQIndex < totalQuestions - 1) {
+                    setCurrentQIndex(currentQIndex + 1);
+                } else {
+                    onComplete();
+                }
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (allWords.length === 0) return;
+
+                // Check if all inputs match their corresponding words (case-insensitive)
+                const isAllCorrect = inputValues.every((val, index) => {
+                    return val.trim().toLowerCase() === allWords[index].toLowerCase();
+                });
+
+                if (isAllCorrect) {
+                    setFeedback("Correct! 正解です！");
+                    setIsCorrect(true);
+                    setTimeout(() => {
+                        nextQuestion();
+                    }, 1000);
+                } else {
+                    setFeedback("Try again. もう一度！");
+                }
+            };
+
+            // Helper to focus next input
+            const handleKeyDown = (e, index) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (index < inputValues.length - 1) {
+                        // Focus next input
+                        const nextInput = document.getElementById(`fill-input-${index + 1}`);
+                        if (nextInput) nextInput.focus();
+                    } else {
+                        // Submit if last input
+                        handleSubmit(e);
+                    }
+                }
+            };
+
+            // Helper to render input group
+            const renderInputs = (words, startIndex) => (
+                <span className="mx-2 inline-flex gap-2 flex-wrap justify-center">
+                    {words.map((word, i) => {
+                        const actualIndex = startIndex + i;
+                        return (
+                            <input
+                                key={actualIndex}
+                                id={`fill-input-${actualIndex}`}
+                                type="text"
+                                value={inputValues[actualIndex] || ""}
+                                onChange={(e) => handleInputChange(actualIndex, e.target.value)}
+                                onKeyDown={(e) => handleKeyDown(e, actualIndex)}
+                                className={`border-b-2 text-center text-indigo-600 font-bold outline-none transition-colors ${isCorrect
+                                    ? 'border-green-500 text-green-600 bg-green-50'
+                                    : 'border-indigo-600 focus:border-indigo-800 bg-white'
+                                    }`}
+                                // Adjust width based on word length, min 3ch
+                                style={{ width: `${Math.max(word.length * 1.2, 3)}ch` }}
+                                placeholder="?"
+                                autoComplete="off"
+                            />
+                        );
+                    })}
+                </span>
+            );
+
+            return (
+                <div className="animate-fade-in w-full p-4 max-w-2xl mx-auto">
+                    <div className="flex justify-between w-full items-center mb-6">
+                        <h3 className="text-xl font-bold text-indigo-900 flex items-center gap-2"><Layers className="text-indigo-500" /> 穴埋め問題</h3>
+                        <button onClick={nextQuestion} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Question</button>
+                    </div>
+                    <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center">
+                        <h2 className="text-xl font-bold text-slate-800 mb-6">{hasCustomFillIn ? `Question ${currentQIndex + 1}` : currentQ.original}</h2>
+                        {hasCustomFillIn ? (
+                            <>
+                                {customTranslationText && (
+                                    <div className="mb-4 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-left">
+                                        <p className="text-xs font-bold text-indigo-500 tracking-wide mb-1">問題文</p>
+                                        <p className="text-lg font-bold text-slate-800">{customTranslationText}</p>
+                                    </div>
+                                )}
+                                <div className="text-2xl font-mono mb-6 bg-slate-50 p-6 rounded-lg inline-block w-full leading-loose">
+                                    {(() => {
+                                        const prompt = currentQ.prompt || "";
+                                        const placeholderPattern = /\(\s*\)/g;
+                                        const parts = prompt.split(placeholderPattern);
+                                        const placeholderCount = (prompt.match(placeholderPattern) || []).length;
+
+                                        if (placeholderCount > 0 && parts.length === placeholderCount + 1) {
+                                            return (
+                                                <>
+                                                    {parts.map((part, i) => (
+                                                        <React.Fragment key={`blank-part-${i}`}>
+                                                            {part}
+                                                            {i < placeholderCount && renderInputs([allWords[i] || ""], i)}
+                                                        </React.Fragment>
+                                                    ))}
+                                                </>
+                                            );
+                                        }
+                                        return (
+                                            <>
+                                                {prompt}
+                                                {allWords.length > 0 && renderInputs(allWords, 0)}
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-2xl font-mono mb-8 bg-slate-50 p-6 rounded-lg inline-block w-full leading-loose">
+                                {/* Pre-Who Inputs (Part 1 of split answer) */}
+                                {preWords.length > 0 && renderInputs(preWords, 0)}
+
+                                {currentQ.rows[0].structure.who.en}
+
+                                {/* Post-Who Inputs (Part 2 of split answer or full answer if not split) */}
+                                {postWords.length > 0 && renderInputs(postWords, preWords.length)}
+
+                                {currentQ.rows[0].structure.what?.en} {currentQ.rows[0].structure.where?.en} {currentQ.rows[0].structure.when?.en}
+                            </div>
+                        )}
+
+                        <div className="flex justify-center">
+                            <button
+                                onClick={handleSubmit}
+                                className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={allWords.length === 0 || inputValues.some(v => !v.trim())}
+                            >
+                                Check Answer
+                            </button>
+                        </div>
+                        <div className={`h-8 mt-4 font-bold ${isCorrect ? 'text-green-600' : 'text-red-500'}`}>{feedback}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ========== STEP: INSTANT ENGLISH OUTPUT ==========
+        const InstantStep = ({ questions = [], onComplete }) => {
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [showAnswer, setShowAnswer] = useState(false);
+            const [feedback, setFeedback] = useState("");
+            const currentQ = questions[currentQIndex];
+
+            useEffect(() => {
+                if (questions.length === 0) onComplete();
+            }, [questions, onComplete]);
+
+            const nextQuestion = () => {
+                if (currentQIndex < questions.length - 1) {
+                    setCurrentQIndex(currentQIndex + 1);
+                    setShowAnswer(false);
+                    setFeedback("");
+                } else {
+                    onComplete();
+                }
+            };
+
+            const revealAnswer = () => {
+                if (!currentQ) return;
+                setShowAnswer(true);
+                speakEnglish(currentQ.answer);
+            };
+
+            if (!currentQ) return null;
+
+            return (
+                <div className="animate-fade-in w-full p-4 max-w-2xl mx-auto">
+                    <div className="flex justify-between w-full items-center mb-6">
+                        <h3 className="text-xl font-bold text-indigo-900 flex items-center gap-2"><Layers className="text-indigo-500" /> 瞬間英作文</h3>
+                        <button onClick={nextQuestion} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Question</button>
+                    </div>
+                    <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center">
+                        <h2 className="text-xl font-bold text-slate-800 mb-6">Question {currentQIndex + 1}</h2>
+                        <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-left">
+                            <p className="text-xs font-bold text-indigo-500 tracking-wide mb-1">問題文</p>
+                            <p className="text-lg font-bold text-slate-800">{currentQ.jp}</p>
+                        </div>
+
+                        {showAnswer ? (
+                            <div className="mb-6 bg-slate-50 rounded-xl p-6">
+                                <p className="text-xs font-bold text-slate-500 tracking-wide mb-2">解答（英語）</p>
+                                <p className="text-2xl font-mono font-bold text-slate-800">{currentQ.answer}</p>
+                                <div className="mt-4">
+                                    <button
+                                        onClick={() => speakEnglish(currentQ.answer)}
+                                        className="text-sm bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-100 transition"
+                                    >
+                                        発音を再生
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-2">聞こえない場合は端末の消音と音量を確認して、もう一度「発音を再生」を押してください。</p>
+                            </div>
+                        ) : (
+                            <div className="mb-6">
+                                <button
+                                    onClick={revealAnswer}
+                                    className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition shadow-lg"
+                                >
+                                    解答を確認
+                                </button>
+                            </div>
+                        )}
+
+                        {showAnswer && (
+                            <div className="flex justify-center gap-3 flex-wrap">
+                                <button onClick={() => { setFeedback("OK!"); nextQuestion(); }} className="bg-green-500 text-white px-6 py-3 rounded-full font-bold hover:bg-green-600 transition">
+                                    言えた
+                                </button>
+                                <button onClick={() => { setFeedback("次で取り返そう"); nextQuestion(); }} className="bg-slate-500 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-600 transition">
+                                    言えなかった
+                                </button>
+                            </div>
+                        )}
+                        <div className="h-6 mt-4 font-bold text-indigo-600">{feedback}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ========== STEP: WRITING ENGLISH OUTPUT ==========
+        const WritingStep = ({ questions = [], onComplete }) => {
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [inputValue, setInputValue] = useState("");
+            const [feedback, setFeedback] = useState("");
+            const [checked, setChecked] = useState(false);
+            const currentQ = questions[currentQIndex];
+
+            useEffect(() => {
+                if (questions.length === 0) onComplete();
+            }, [questions, onComplete]);
+
+            const nextQuestion = () => {
+                if (currentQIndex < questions.length - 1) {
+                    setCurrentQIndex(currentQIndex + 1);
+                    setInputValue("");
+                    setFeedback("");
+                    setChecked(false);
+                } else {
+                    onComplete();
+                }
+            };
+
+            const checkAnswer = () => {
+                if (!currentQ) return;
+                const user = inputValue.trim().toLowerCase();
+                const answer = currentQ.answer.trim().toLowerCase();
+                const isCorrect = user === answer;
+                setChecked(true);
+                setFeedback(isCorrect ? "Correct! 正解です！" : "Not yet. 正しい答えを確認して次へ。");
+                speakEnglish(currentQ.answer);
+            };
+
+            if (!currentQ) return null;
+
+            return (
+                <div className="animate-fade-in w-full p-4 max-w-2xl mx-auto">
+                    <div className="flex justify-between w-full items-center mb-6">
+                        <h3 className="text-xl font-bold text-indigo-900 flex items-center gap-2"><Layers className="text-indigo-500" /> 記述英作文</h3>
+                        <button onClick={nextQuestion} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Question</button>
+                    </div>
+                    <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center">
+                        <h2 className="text-xl font-bold text-slate-800 mb-6">Question {currentQIndex + 1}</h2>
+                        <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-left">
+                            <p className="text-xs font-bold text-indigo-500 tracking-wide mb-1">問題文</p>
+                            <p className="text-lg font-bold text-slate-800">{currentQ.jp}</p>
+                        </div>
+
+                        <input
+                            type="text"
+                            value={inputValue}
+                            onChange={(e) => setInputValue(e.target.value)}
+                            placeholder="英語を入力"
+                            className="w-full border border-slate-300 rounded-lg p-3 text-center text-lg font-mono text-slate-800 mb-4"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !checked && inputValue.trim()) checkAnswer();
+                            }}
+                        />
+
+                        {checked && (
+                            <div className="mb-4 bg-slate-50 rounded-xl p-4">
+                                <p className="text-xs font-bold text-slate-500 tracking-wide mb-2">正しい英語</p>
+                                <p className="text-xl font-mono font-bold text-slate-800">{currentQ.answer}</p>
+                                <div className="mt-3">
+                                    <button
+                                        onClick={() => speakEnglish(currentQ.answer)}
+                                        className="text-sm bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-100 transition"
+                                    >
+                                        発音を再生
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-2">聞こえない場合は端末の消音と音量を確認して、もう一度「発音を再生」を押してください。</p>
+                            </div>
+                        )}
+
+                        <div className="flex justify-center">
+                            {!checked ? (
+                                <button
+                                    onClick={checkAnswer}
+                                    disabled={!inputValue.trim()}
+                                    className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    解答を確認
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={nextQuestion}
+                                    className="bg-green-500 text-white px-8 py-3 rounded-full font-bold hover:bg-green-600 transition shadow-lg"
+                                >
+                                    次へ
+                                </button>
+                            )}
+                        </div>
+                        <div className={`h-8 mt-4 font-bold ${feedback.includes("Correct") ? "text-green-600" : "text-indigo-600"}`}>{feedback}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ========== STEP 3: ERROR CORRECTION ==========
+        const ErrorStep = ({ questions, onComplete }) => {
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+            const [feedback, setFeedback] = useState("");
+            const [selectedPart, setSelectedPart] = useState(null); // 'who', 'does', 'what', etc.
+            const [inputValue, setInputValue] = useState("");
+            const [isCorrect, setIsCorrect] = useState(false);
+            const currentQ = questions[currentQIndex];
+
+            // Determine the error.
+            // If data has explicit error info, use it. Otherwise, auto-generate (legacy support).
+            // We'll assume the data will be updated to include 'error' prop:
+            // error: { wrong: "plays", correct: "play", part: "does", sentence: "You plays the piano." }
+
+            // For now, let's mock the "Auto-Generate" to support this new UI if data is missing.
+            // We'll create a "Wrong State" derived from the correct data.
+
+            const errorData = useMemo(() => {
+                if (currentQ.error) return currentQ.error;
+
+                // Fallback: Auto-generate an error on 'does' part
+                const targetRow = currentQ.rows[0];
+                const correctText = targetRow.structure.does.en;
+                // Simple dummy generator
+                const dummyText = currentQ.enOptions?.find(o => o.category === 'dummy')?.text || "wrong";
+
+                return {
+                    part: 'does',
+                    wrong: dummyText,
+                    correct: correctText,
+                    sentenceParts: {
+                        who: targetRow.structure.who.en,
+                        does: dummyText,
+                        what: targetRow.structure.what?.en,
+                        where: targetRow.structure.where?.en,
+                        when: targetRow.structure.when?.en
+                    }
+                };
+            }, [currentQ]);
+
+            const handlePartClick = (partKey, text) => {
+                if (isCorrect) return;
+
+                if (partKey === errorData.part) {
+                    setSelectedPart(partKey);
+                    setFeedback("Correct! That's the error. Now fix it.");
+                    setInputValue("");
+                } else {
+                    setFeedback("No, that part is correct.");
+                    setSelectedPart(null);
+                }
+            };
+
+            const nextQuestion = () => {
+                if (currentQIndex < questions.length - 1) setCurrentQIndex(currentQIndex + 1);
+                else onComplete();
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (inputValue.trim().toLowerCase() === errorData.correct.toLowerCase()) {
+                    setFeedback("Correct! Great job.");
+                    setIsCorrect(true);
+                    setTimeout(() => {
+                        setFeedback("");
+                        setSelectedPart(null);
+                        setInputValue("");
+                        setIsCorrect(false);
+                        nextQuestion();
+                    }, 1000);
+                } else {
+                    setFeedback("Try again.");
+                }
+            };
+
+            return (
+                <div className="animate-fade-in w-full p-4 max-w-2xl mx-auto">
+                    <div className="flex justify-between w-full items-center mb-6">
+                        <h3 className="text-xl font-bold text-indigo-900 flex items-center gap-2"><AlertTriangle className="text-indigo-500" /> 間違い探し</h3>
+                        <button onClick={nextQuestion} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Question</button>
+                    </div>
+                    <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center">
+                        <p className="text-slate-500 mb-4 font-bold">おかしいところをクリックして、直そう！</p>
+
+                        <div className="flex justify-center gap-2 flex-wrap font-mono text-xl mb-8 items-end min-h-[4rem]">
+                            {/* Display sentence parts. If strict structure isn't available, we rely on errorData.sentenceParts */}
+                            {['does_pre', 'who', 'does', 'what', 'where', 'when'].map(key => {
+                                const text = errorData.sentenceParts?.[key];
+                                if (!text) return null;
+
+                                const isSelected = selectedPart === key;
+                                const isErrorPart = key === errorData.part;
+
+                                return (
+                                    <div key={key} className="flex flex-col items-center gap-2">
+                                        {isSelected ? (
+                                            <div className="animate-fade-in">
+                                                <form onSubmit={handleSubmit}>
+                                                    <input
+                                                        type="text"
+                                                        value={inputValue}
+                                                        onChange={(e) => setInputValue(e.target.value)}
+                                                        className="border-b-2 border-indigo-600 text-center text-indigo-600 font-bold outline-none w-24 bg-indigo-50"
+                                                        placeholder="Correct it"
+                                                        autoFocus
+                                                    />
+                                                </form>
+                                            </div>
+                                        ) : (
+                                            /* If solved, show Correct text. If not solved, show Wrong text */
+                                            isCorrect && isErrorPart ? (
+                                                <span className="text-green-600 font-bold border-b-2 border-green-500 px-2 py-1">{errorData.correct}</span>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handlePartClick(key, text)}
+                                                    className={`px-2 py-1 rounded transition border-2 border-transparent hover:border-red-200 hover:bg-red-50 ${isSelected ? 'opacity-0' : ''}`}
+                                                >
+                                                    {text}
+                                                </button>
+                                            )
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className={`h-8 mt-4 font-bold ${isCorrect ? 'text-green-600' : 'text-indigo-600'}`}>{feedback}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ========== STEP 4 & 5: TRAINING (Sort & Composition) ==========
+        const TrainingStep = ({ questions, mode = "sort", onComplete, course }) => {
+            const [currentQIndex, setCurrentQIndex] = useState(0);
+
+            // Phases: 'selection' -> 'sort_jp' -> 'sort_en' (for mode='sort')
+            // Phases: 'composition_input' (for mode='composition')
+            const [phase, setPhase] = useState(mode === 'composition' ? 'composition_input' : 'sort_jp');
+
+            const [slots, setSlots] = useState({});
+            const [selectedCard, setSelectedCard] = useState(null);
+            const [draggedCard, setDraggedCard] = useState(null);
+            const [feedback, setFeedback] = useState("");
+            const [showHint, setShowHint] = useState(false);
+
+            // Composition Input State
+            const [inputs, setInputs] = useState({}); // { rowId_folderKey: "value" }
+
+            const currentQ = questions[currentQIndex];
+
+            const { shuffledJpOptions, shuffledEnOptions } = useMemo(() => {
+                if (!currentQ) return { shuffledJpOptions: [], shuffledEnOptions: [] };
+
+                const getCorrectOnly = (options, lang) => {
+                    const expectedTexts = [];
+                    currentQ.rows.forEach(row => {
+                        FOLDERS.forEach(f => {
+                            const val = row.structure[f.key];
+                            if (val && val[lang]) {
+                                expectedTexts.push(val[lang]);
+                            }
+                        });
+                    });
+
+                    const correctOptions = [];
+                    const remainingExpected = [...expectedTexts];
+
+                    options.forEach(opt => {
+                        const idx = remainingExpected.indexOf(opt.text);
+                        if (idx !== -1) {
+                            correctOptions.push(opt);
+                            remainingExpected.splice(idx, 1);
+                        }
+                    });
+
+                    // Shuffle
+                    return correctOptions.sort(() => Math.random() - 0.5);
+                };
+
+                return {
+                    shuffledJpOptions: getCorrectOnly(currentQ.jpOptions || [], 'jp'),
+                    shuffledEnOptions: getCorrectOnly(currentQ.enOptions || [], 'en')
+                };
+            }, [currentQ]);
+
+            // Selection Options (Memoized)
+            const selectionOptions = useMemo(() => {
+                if (mode === 'composition') return [];
+                const correct = currentQ.translation;
+                const dummies = questions
+                    .filter(q => q.id !== currentQ.id)
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 2)
+                    .map(q => q.translation);
+                return [correct, ...dummies].sort(() => 0.5 - Math.random());
+            }, [currentQ, questions, mode]);
+
+            useEffect(() => {
+                // Reset state on Question Change
+                if (currentQ?.rows) {
+                    const initialSlots = {};
+                    currentQ.rows.forEach(row => {
+                        // Pre-fill logic based on phase/mode
+                        // For Sort Mode: Starts empty
+                        // For Composition Mode: JP is pre-filled
+                        initialSlots[row.id] = {
+                            who: { jp: mode === 'composition' ? row.structure.who?.jp : null, en: null },
+                            does: { jp: mode === 'composition' ? row.structure.does?.jp : null, en: null },
+                            what: { jp: mode === 'composition' ? row.structure.what?.jp : null, en: null },
+                            where: { jp: mode === 'composition' ? row.structure.where?.jp : null, en: null },
+                            how: { jp: mode === 'composition' ? row.structure.how?.jp : null, en: null },
+                            when: { jp: mode === 'composition' ? row.structure.when?.jp : null, en: null }
+                        };
+                    });
+                    setSlots(initialSlots);
+                    setInputs({});
+                    setPhase(mode === 'composition' ? 'composition_input' : 'sort_jp');
+                    setFeedback("");
+                    setShowHint(false);
+                    setIsPhaseComplete(false); // Reset check answer state
+                }
+            }, [currentQIndex, mode, questions]); // Added questions to dependency just in case
+
+            const nextQuestion = () => {
+                if (currentQIndex < questions.length - 1) {
+                    setCurrentQIndex(currentQIndex + 1);
+                } else {
+                    onComplete();
+                }
+            };
+
+            // --- Selection Phase Logic ---
+            const handleSelection = (text) => {
+                if (text === currentQ.translation) {
+                    setFeedback("Correct! Next: Sort Japanese.");
+                    setTimeout(() => {
+                        setFeedback("");
+                        setPhase('sort_jp');
+                    }, 800);
+                } else {
+                    setFeedback("Try again.");
+                }
+            };
+
+
+            // --- Sort Phase Logic (JP & EN) ---
+            const [isPhaseComplete, setIsPhaseComplete] = useState(false);
+
+            // New logic: Just place the card in the first available slot. No immediate validation.
+            const handleCardClick = (item, type) => {
+                const targetLang = type;
+                let foundSlot = false;
+                const newSlots = JSON.parse(JSON.stringify(slots));
+
+                for (const row of currentQ.rows) {
+                    for (const folder of FOLDERS) {
+                        const correctData = row.structure[folder.key];
+                        if (correctData && !newSlots[row.id][folder.key][targetLang]) {
+                            // Empty slot found!
+                            newSlots[row.id][folder.key][targetLang] = item;
+                            foundSlot = true;
+                            break;
+                        }
+                    }
+                    if (foundSlot) break;
+                }
+
+                if (foundSlot) {
+                    setSlots(newSlots);
+                    setFeedback(""); // clear any old feedback
+                    checkIfAllSlotsFilled(newSlots, targetLang);
+                } else {
+                    setFeedback("これ以上置けません。");
+                }
+            };
+
+            const removeCard = (rowId, folderKey, targetLang) => {
+                const newSlots = JSON.parse(JSON.stringify(slots));
+                newSlots[rowId][folderKey][targetLang] = null;
+                setSlots(newSlots);
+                setIsPhaseComplete(false);
+                setFeedback("");
+            };
+
+            const checkIfAllSlotsFilled = (currentSlots, targetLang) => {
+                let allFilled = true;
+                for (const row of currentQ.rows) {
+                    for (const folder of FOLDERS) {
+                        if (row.structure[folder.key] && !currentSlots[row.id][folder.key][targetLang]) {
+                            allFilled = false;
+                            break;
+                        }
+                    }
+                }
+                setIsPhaseComplete(allFilled);
+            };
+
+            const evaluateSort = () => {
+                const isJpPhase = phase === 'sort_jp';
+                const targetLang = isJpPhase ? 'jp' : 'en';
+                let allCorrect = true;
+
+                for (const row of currentQ.rows) {
+                    for (const folder of FOLDERS) {
+                        const correctData = row.structure[folder.key];
+                        if (correctData) {
+                            const placedCard = slots[row.id][folder.key][targetLang];
+                            if (!placedCard || placedCard.text !== correctData[targetLang]) {
+                                allCorrect = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (allCorrect) {
+                    setFeedback("正解です！");
+                    setTimeout(() => {
+                        if (isJpPhase) {
+                            if (course?.japaneseOnly) {
+                                setIsPhaseComplete(false); // reset for English phase
+                                nextQuestion();
+                            } else {
+                                setPhase('sort_en');
+                                setIsPhaseComplete(false); // reset for English phase
+                                setFeedback("Great! Now Sort English.");
+                            }
+                        } else {
+                            nextQuestion();
+                        }
+                    }, 1000);
+                } else {
+                    setFeedback("間違いがあります。もう一度考えてみましょう！");
+                }
+            };
+
+            // --- Composition Phase Logic ---
+            const handleInputChange = (rowId, folderKey, val) => {
+                setInputs(prev => ({ ...prev, [`${rowId}_${folderKey}`]: val }));
+            };
+
+            const checkComposition = () => {
+                let isAllCorrect = true;
+                currentQ.rows.forEach(row => {
+                    FOLDERS.forEach(folder => {
+                        const correctText = row.structure[folder.key]?.en;
+                        if (correctText) {
+                            const inputVal = inputs[`${row.id}_${folder.key}`] || "";
+                            if (inputVal.trim().toLowerCase() !== correctText.toLowerCase()) {
+                                isAllCorrect = false;
+                            }
+                        }
+                    });
+                });
+
+                if (isAllCorrect) {
+                    setFeedback("Perfect! All Correct.");
+                    setTimeout(nextQuestion, 1000);
+                } else {
+                    setFeedback("Some parts are wrong. Check again.");
+                }
+            };
+
+
+
+
+            // Helper
+            function isCardUsed(cardId, type) {
+                return Object.values(slots).some(row => Object.values(row).some(slot => slot[type]?.id === cardId));
+            }
+
+            return (
+                <div className="animate-fade-in w-full p-4">
+                    <h3 className="text-xl font-bold mb-4 text-indigo-900 flex items-center gap-2">
+                        <Layers className="text-indigo-500" />
+                        {mode === 'composition' ? "英作文トレーニング" : "意味順トレーニング"}
+                    </h3>
+
+                    {/* Progress & Header */}
+                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6 text-center sticky top-0 z-10">
+                        <div className="flex justify-between items-center mb-2 px-2">
+                            <span className="text-xs font-bold text-slate-400">Question {currentQIndex + 1} / {questions.length}</span>
+                            <button onClick={nextQuestion} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">Skip <ArrowRight size={12} /></button>
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">{currentQ.original}</h2>
+
+                        {/* Phase Indicator */}
+                        <div className="flex justify-center gap-4 text-xs font-bold text-slate-400 mb-4">
+                            {mode === 'sort' && (
+                                <>
+                                    <span className={phase === 'sort_jp' ? 'text-indigo-600' : ''}>1. Sort JP</span>
+                                    <span className="text-slate-300">&gt;</span>
+                                    <span className={phase === 'sort_en' ? 'text-indigo-600' : ''}>2. Sort EN</span>
+                                </>
+                            )}
+                            {mode === 'composition' && <span className="text-indigo-600">Writing</span>}
+                        </div>
+
+                        {phase === 'selection' && (
+                            <div className="grid gap-2">
+                                {selectionOptions.map((opt, i) => (
+                                    <button key={i} onClick={() => handleSelection(opt)} className="block w-full text-left p-4 border-2 rounded-xl hover:border-indigo-500 hover:bg-indigo-50 transition font-bold text-slate-700">
+                                        {opt}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="h-6 text-indigo-600 font-bold">{feedback}</div>
+                    </div>
+
+                    {phase !== 'selection' && (
+                        <div className="overflow-x-auto pb-4">
+                            {currentQ.rows?.map(row => (
+                                <div key={row.id} className="relative mb-8 min-w-[700px]">
+                                    <div className="flex gap-2">
+                                        {FOLDERS.map(folder => {
+                                            const isActive = row.structure[folder.key] !== null;
+                                            const content = slots[row.id]?.[folder.key] || { jp: null, en: null };
+                                            const isJpFilled = content.jp !== null;
+                                            const isEnFilled = content.en !== null;
+
+                                            // Input Mode
+                                            if (phase === 'composition_input' && isActive) {
+                                                const val = inputs[`${row.id}_${folder.key}`] || "";
+                                                return (
+                                                    <div key={folder.key} className="flex-1 flex flex-col relative">
+                                                        <div className={`${folder.color} font-bold text-center py-1 text-xs rounded-t border-b-2 text-white`}>{folder.label}</div>
+                                                        <div className="bg-slate-50 border-2 border-slate-200 h-32 rounded-b p-2 flex flex-col items-center justify-center gap-2">
+                                                            <div className="text-sm font-bold text-slate-500 mb-1">{content.jp?.text || row.structure[folder.key].jp}</div>
+                                                            <input
+                                                                type="text"
+                                                                className="border border-slate-300 rounded p-2 text-center w-full font-bold text-indigo-800"
+                                                                value={val}
+                                                                onChange={(e) => handleInputChange(row.id, folder.key, e.target.value)}
+                                                                placeholder="En"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }
+
+                                            // Sort Mode
+                                            return (
+                                                <div key={folder.key} className="flex-1 flex flex-col relative">
+                                                    <div className={`${folder.color} font-bold text-center py-1 text-xs rounded-t border-b-2 ${isActive ? 'opacity-100' : 'opacity-40'}`}>{folder.label}</div>
+                                                    <div
+                                                        className={`bg-white border-2 border-dashed h-32 rounded-b p-2 flex flex-col gap-1 items-center justify-center transition-all ${isActive ? 'cursor-pointer hover:bg-slate-50' : 'opacity-50'}`}
+                                                        onClick={() => {
+                                                            if (isActive && isJpFilled && phase === 'sort_jp') removeCard(row.id, folder.key, 'jp');
+                                                            if (isActive && isEnFilled && phase === 'sort_en') removeCard(row.id, folder.key, 'en');
+                                                        }}
+                                                    >
+                                                        {isJpFilled && <div className="bg-white border border-slate-300 px-2 py-1 rounded shadow-sm text-sm font-bold text-slate-700 w-full text-center hover:bg-red-50 hover:border-red-300 transition-colors">{content.jp.text}</div>}
+
+                                                        {isEnFilled ? (
+                                                            <div className="bg-indigo-600 text-white px-2 py-1 rounded shadow-sm text-sm font-bold w-full text-center hover:bg-red-500 transition-colors">{content.en.text}</div>
+                                                        ) : (
+                                                            isActive && phase === 'sort_en' && <div className="text-slate-300 text-xs text-center w-full">Click below to place</div>
+                                                        )}
+                                                        {(!isJpFilled && isActive && phase === 'sort_jp') && <div className="text-slate-300 text-xs text-center w-full">Click below to place</div>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {phase === 'sort_jp' && (
+                        <div className="fixed bottom-0 left-0 w-full bg-slate-900/90 p-4 pb-8 backdrop-blur z-50">
+                            <p className="text-white text-center font-bold mb-2">日本語カードを並べてください</p>
+                            <div className="flex justify-center gap-2 flex-wrap">
+                                {shuffledJpOptions.filter(opt => !isCardUsed(opt.id, 'jp')).map(card => (
+                                    <button
+                                        key={card.id}
+                                        onClick={() => handleCardClick(card, 'jp')}
+                                        className={`bg-white px-4 py-3 rounded-xl font-bold border-b-4 border-slate-300 hover:translate-y-1 active:border-b-0 active:translate-y-2 transition`}
+                                    >
+                                        {card.text}
+                                    </button>
+                                ))}
+                            </div>
+                            {isPhaseComplete && (
+                                <div className="mt-4 flex justify-center animate-fade-in">
+                                    <button onClick={evaluateSort} className="bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-xl hover:bg-green-600 transition w-full max-w-sm">
+                                        Check Answer
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {phase === 'sort_en' && (
+                        <div className="fixed bottom-0 left-0 w-full bg-slate-900/90 p-4 pb-8 backdrop-blur z-50">
+                            <p className="text-white text-center font-bold mb-2">英語カードを並べてください</p>
+                            <div className="flex justify-center gap-2 flex-wrap">
+                                {shuffledEnOptions.filter(opt => !isCardUsed(opt.id, 'en')).map(card => (
+                                    <button
+                                        key={card.id}
+                                        onClick={() => handleCardClick(card, 'en')}
+                                        className={`bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold border-b-4 border-indigo-800 hover:translate-y-1 active:border-b-0 active:translate-y-2 transition`}
+                                    >
+                                        {card.text}
+                                    </button>
+                                ))}
+                            </div>
+                            {isPhaseComplete && (
+                                <div className="mt-4 flex justify-center animate-fade-in">
+                                    <button onClick={evaluateSort} className="bg-green-500 text-white px-8 py-3 rounded-full font-bold shadow-xl hover:bg-green-600 transition w-full max-w-sm">
+                                        Check Answer
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {phase === 'composition_input' && (
+                        <div className="fixed bottom-0 left-0 w-full bg-white border-t p-4 flex justify-center pb-8 sticky z-50">
+                            <button onClick={checkComposition} className="bg-indigo-600 text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-indigo-700 transition w-full max-w-sm">
+                                Check Answer
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+
+        // ========== COMPLETE SCREEN ==========
+        const CompleteScreen = ({ onReset }) => (
+            <div className="animate-fade-in max-w-2xl mx-auto p-4 text-center">
+                <div className="bg-white p-10 rounded-2xl shadow-xl">
+                    <div className="text-6xl mb-6">🎉</div>
+                    <h2 className="text-3xl font-bold text-indigo-900 mb-4">おめでとう！</h2>
+                    <p className="text-slate-600 mb-8">すべてのトレーニングを完了しました！</p>
+                    <button onClick={onReset} className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition shadow-lg">コース選択に戻る</button>
+                </div>
+            </div>
+        );
+
+
+        // ========== MAIN APP ==========
+        const App = () => {
+            const [selectedCourse, setSelectedCourse] = useState(null);
+            const [currentStep, setCurrentStep] = useState('select'); // select, flashcard, instant, fillin, writing, error, sort, composition, complete
+
+            useEffect(() => {
+                if (typeof window !== "undefined" && window.speechSynthesis) {
+                    window.speechSynthesis.getVoices();
+                }
+            }, []);
+
+            const stepSequence = useMemo(() => {
+                if (!selectedCourse) return [];
+                if (Array.isArray(selectedCourse.stepOrder) && selectedCourse.stepOrder.length > 0) {
+                    return selectedCourse.stepOrder;
+                }
+                if (selectedCourse.japaneseOnly) {
+                    return ['flashcard', 'sort', 'complete'];
+                }
+                return ['flashcard', 'fillin', 'error', 'sort', 'composition', 'complete'];
+            }, [selectedCourse]);
+
+            const handleCourseSelect = (course) => {
+                setSelectedCourse(course);
+                if (Array.isArray(course.stepOrder) && course.stepOrder.length > 0) {
+                    setCurrentStep(course.stepOrder[0]);
+                } else {
+                    setCurrentStep('flashcard');
+                }
+            };
+
+            const goToNextStep = () => {
+                setCurrentStep(prev => {
+                    const idx = stepSequence.indexOf(prev);
+                    if (idx === -1) return stepSequence[0] || 'complete';
+                    return stepSequence[idx + 1] || 'complete';
+                });
+            };
+
+            const handleReset = () => { setSelectedCourse(null); setCurrentStep('select'); };
+
+            return (
+                <div className="min-h-screen py-8">
+                    {currentStep === 'select' && <CourseSelect onSelect={handleCourseSelect} />}
+
+                    {currentStep === 'flashcard' && selectedCourse && (
+                        <FlashcardStep
+                            flashcards={selectedCourse.flashcards}
+                            onComplete={goToNextStep}
+                        />
+                    )}
+
+                    {currentStep === 'instant' && selectedCourse && (
+                        <InstantStep
+                            questions={selectedCourse.instantQuestions}
+                            onComplete={goToNextStep}
+                        />
+                    )}
+
+                    {currentStep === 'fillin' && selectedCourse && (
+                        <FillInStep
+                            questions={selectedCourse.questions}
+                            fillInQuestions={selectedCourse.fillInQuestions}
+                            onComplete={goToNextStep}
+                        />
+                    )}
+
+                    {currentStep === 'writing' && selectedCourse && (
+                        <WritingStep
+                            questions={selectedCourse.writingQuestions}
+                            onComplete={goToNextStep}
+                        />
+                    )}
+
+                    {currentStep === 'error' && selectedCourse && (
+                        <ErrorStep
+                            questions={selectedCourse.questions}
+                            onComplete={goToNextStep}
+                        />
+                    )}
+
+                    {currentStep === 'sort' && selectedCourse && (
+                        <TrainingStep
+                            questions={selectedCourse.questions}
+                            mode="sort"
+                            onComplete={goToNextStep}
+                            course={selectedCourse}
+                        />
+                    )}
+
+                    {currentStep === 'composition' && selectedCourse && !selectedCourse.japaneseOnly && (
+                        <TrainingStep
+                            questions={selectedCourse.questions}
+                            mode="composition"
+                            onComplete={goToNextStep}
+                            course={selectedCourse}
+                        />
+                    )}
+
+                    {currentStep === 'complete' && <CompleteScreen onReset={handleReset} />}
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+
+</html>
