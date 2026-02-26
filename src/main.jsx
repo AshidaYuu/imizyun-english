@@ -672,7 +672,11 @@ import "./styles.css";
             {
                 id: 2026022502,
                 title: "所有格と形容詞",
-                stepOrder: ['flashcard', 'instant', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/PWoT7ifM0lU?si=9Qwhpl3jK6Qs7UEq",
+                    title: "所有格と形容詞（導入動画）"
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'instant', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "固有名詞以外の普通の名詞は単体で使えないため、どうしなければならないか？", back: "必ず前になにか言葉をつけてあげないといけない", hint: "普通名詞は丸裸で使えません" },
                     { id: 2, front: "所有格とは、どのような意味を表す言葉か？", back: "誰のものかを表す\n「〜の」（私の、あなたの、彼の、彼女の、それらのなど）", hint: "所有格は ownership を表します" },
