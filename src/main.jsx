@@ -672,7 +672,7 @@ import "./styles.css";
             {
                 id: 2026022502,
                 title: "所有格と形容詞",
-                stepOrder: ['flashcard', 'instant', 'fillin', 'writing', 'complete'],
+                stepOrder: ['flashcard', 'instant', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "固有名詞以外の普通の名詞は単体で使えないため、どうしなければならないか？", back: "必ず前になにか言葉をつけてあげないといけない", hint: "普通名詞は丸裸で使えません" },
                     { id: 2, front: "所有格とは、どのような意味を表す言葉か？", back: "誰のものかを表す\n「〜の」（私の、あなたの、彼の、彼女の、それらのなど）", hint: "所有格は ownership を表します" },
@@ -2625,16 +2625,66 @@ import "./styles.css";
             </header>
         );
 
+        const toYouTubeEmbedUrl = (rawUrl) => {
+            try {
+                const url = new URL(rawUrl);
+                const host = url.hostname.replace("www.", "");
+                let videoId = "";
+
+                if (host === "youtu.be") {
+                    videoId = url.pathname.replace("/", "").trim();
+                } else if (host === "youtube.com" || host === "m.youtube.com") {
+                    if (url.pathname === "/watch") {
+                        videoId = (url.searchParams.get("v") || "").trim();
+                    } else if (url.pathname.startsWith("/embed/")) {
+                        videoId = url.pathname.replace("/embed/", "").split("/")[0].trim();
+                    } else if (url.pathname.startsWith("/shorts/")) {
+                        videoId = url.pathname.replace("/shorts/", "").split("/")[0].trim();
+                    }
+                }
+
+                if (!videoId) return null;
+                return `https://www.youtube.com/embed/${videoId}?rel=0`;
+            } catch (error) {
+                return null;
+            }
+        };
+
         const VideoIntroStep = ({ course, onComplete }) => {
             const video = course?.introVideo;
             if (!video) return null;
+            const embedUrl = toYouTubeEmbedUrl(video.url);
 
             return (
                 <div className="animate-fade-in max-w-3xl mx-auto p-4">
                     <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 text-center">
                         <h2 className="text-2xl font-bold text-slate-800 mb-4">最初に動画を見てください</h2>
                         <p className="text-slate-600 mb-2">{course.title}</p>
-                        <p className="text-slate-500 mb-8">{video.title}</p>
+                        <p className="text-slate-500 mb-6">{video.title}</p>
+
+                        <div className="mb-6">
+                            <div className="relative w-full pt-[56.25%] rounded-xl overflow-hidden border border-slate-200 bg-black">
+                                {embedUrl ? (
+                                    <iframe
+                                        className="absolute inset-0 w-full h-full"
+                                        src={embedUrl}
+                                        title={video.title}
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        referrerPolicy="strict-origin-when-cross-origin"
+                                        allowFullScreen
+                                    />
+                                ) : (
+                                    <a
+                                        href={video.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="absolute inset-0 flex items-center justify-center text-white font-bold hover:underline"
+                                    >
+                                        動画を開く
+                                    </a>
+                                )}
+                            </div>
+                        </div>
 
                         <div className="flex flex-col sm:flex-row justify-center gap-3">
                             <a
@@ -2643,7 +2693,7 @@ import "./styles.css";
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition"
                             >
-                                動画を開く
+                                別タブで開く
                             </a>
                             <button
                                 onClick={onComplete}
