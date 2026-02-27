@@ -497,7 +497,7 @@
                     { id: 11, front: "a と an の使い分けルールは？", back: "直後の名詞の発音が子音なら a、母音なら an。", hint: "スペルより発音で判断します" },
                     { id: 12, front: "hour につくのは a / an？理由は？", back: "an hour。スペルはhだが発音が母音から始まるため。", hint: "発音は「アワー」" },
                     { id: 13, front: "university につくのは a / an？理由は？", back: "a university。発音が「ユ」で始まり母音発音ではないため。", hint: "発音は「ユニバーシティ」" },
-                    { id: 14, front: "the のコアイメージは？", back: "その場にいる人全員が「せーの」で1つに決まる感覚。", hint: "共通認識の1つです" },
+                    { id: 14, front: "theの意味は？", back: "その場にいる人全員が「せーの」で1つに決まる感覚。", hint: "共通認識の1つです" },
                     { id: 15, front: "sun / moon に the がつく理由は？", back: "みんなが見て同じ1つに決まるから。", hint: "唯一性が高い名詞です" },
                     { id: 16, front: "the は必ず「その〜」と訳す必要がある？", back: "訳さなくてよい。英語の感覚として the がつく。", hint: "日本語訳より英語の感覚を優先します" },
                     { id: 17, front: "star には基本的に the がつく？理由は？", back: "つかないことが多い。星は多く、1つに特定しにくいから。", hint: "1つに決まるかどうかが鍵です" },
@@ -571,6 +571,11 @@
                     { id: 1, front: "固有名詞以外の普通の名詞は単体で使えないため、どうしなければならないか？", back: "必ず前になにか言葉をつけてあげないといけない", hint: "普通名詞は丸裸で使えません" },
                     { id: 2, front: "所有格とは、どのような意味を表す言葉か？", back: "誰のものかを表す\n「〜の」（私の、あなたの、彼の、彼女の、それらのなど）", hint: "所有格は ownership を表します" },
                     { id: 3, front: "所有格の正しい覚え方は？", back: "my pen, your desk のように、後ろの言葉と必ず1セットで覚えてしまうこと", hint: "所有格は後ろの名詞とセット" },
+                    { id: 31, front: "所有格myの意味は？「私の」＊「私」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「私の」", hint: "" },
+                    { id: 32, front: "所有格yourの意味は？「あなたの」＊「あなた」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「あなたの」", hint: "" },
+                    { id: 33, front: "所有格hisの意味は？「彼の」＊「彼」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「彼の」", hint: "" },
+                    { id: 34, front: "所有格herの意味は？「彼女の」＊「彼女」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「彼女の」", hint: "" },
+                    { id: 35, front: "所有格ourの意味は？「私たちの」＊「私たち」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「私たちの」", hint: "" },
                     { id: 4, front: "わたしのねこ", back: "my cat", hint: "my + 名詞" },
                     { id: 5, front: "あなたのねこ", back: "your cat", hint: "your + 名詞" },
                     { id: 6, front: "彼のねこ", back: "his cat", hint: "his + 名詞" },
@@ -594,10 +599,11 @@
                     { id: 24, front: "形容詞の「new」の意味は？", back: "新しい", hint: "new = 新しい" },
                     { id: 25, front: "形容詞の「busy」の意味は？", back: "忙しい", hint: "busy = 忙しい" },
                     { id: 26, front: "形容詞の「kind」の意味は？", back: "親切な", hint: "kind = 親切な" },
-                    { id: 27, front: "「私の古い家」を英語にする際の正しい語順とフレーズを答えよ。", back: "所有格 + 形容詞 + 名詞（my old house）", hint: "my / old / house の順" },
-                    { id: 28, front: "「この新しい車」を英語で答えよ。", back: "this new car", hint: "this + new + car" },
-                    { id: 29, front: "「その大きなカバン」を英語で答えよ。", back: "the big bag", hint: "the + big + bag" },
-                    { id: 30, front: "「一人の良い先生」を英語で答えよ。", back: "a good teacher", hint: "a + good + teacher" }
+                    { id: 27, front: "a /an 、the、所有格、this. thatは一緒に使える？", back: "一緒に使うことができない", hint: "どれか1つを名詞の前に使います" },
+                    { id: 28, front: "「私の古い家」を英語にする際の正しい語順とフレーズを答えよ。", back: "所有格 + 形容詞 + 名詞（my old house）", hint: "my / old / house の順" },
+                    { id: 29, front: "「この新しい車」を英語で答えよ。", back: "this new car", hint: "this + new + car" },
+                    { id: 30, front: "「その大きなカバン」を英語で答えよ。", back: "the big bag", hint: "the + big + bag" },
+                    { id: 31, front: "「一人の良い先生」を英語で答えよ。", back: "a good teacher", hint: "a + good + teacher" }
                 ],
                 instantQuestions: [
                     { id: 1, jp: "わたしのねこ", answer: "my cat" },
@@ -777,7 +783,7 @@
                 <h1 className="text-3xl font-bold text-center text-indigo-900 mb-2">イミジュントレーニング</h1>
                 <p className="text-center text-slate-500 mb-8">Step 2・3 抽出版</p>
                 <div className="space-y-3">
-                    {COURSES.map(course => (
+                    {COURSES.map((course, index) => (
                         <button
                             key={course.id}
                             onClick={() => onSelect(course)}
@@ -785,7 +791,7 @@
                         >
                             <div className="flex items-center gap-3">
                                 <BookOpen className="text-indigo-500" size={24} />
-                                <span className="font-bold text-slate-800 text-left">{course.title}</span>
+                                <span className="font-bold text-slate-800 text-left">{`ステージ${index + 1}：${course.title}`}</span>
                             </div>
                             <ChevronRight className="text-slate-400 group-hover:text-indigo-500 transition" />
                         </button>

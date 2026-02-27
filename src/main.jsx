@@ -152,6 +152,315 @@ import "./styles.css";
             return { id, original, translation, rows, jpOptions, enOptions };
         };
 
+        const ERROR_REASON_MAP = {
+            2026022604: {
+                1: {
+                    reason: "主語がIのとき、be動詞はamを使います。be動詞は主語に合わせて形を変えるので、isは使えません。",
+                    reviewPoints: ["主語がIの時はbe動詞は何に変わる？", "be動詞のルールは？"]
+                },
+                2: {
+                    reason: "主語がYouのときはbe動詞はareです。isはIとYou以外の単数主語で使う形です。",
+                    reviewPoints: ["主語がYouや複数の時に、be動詞は何に変わる？", "isは主語がどんな時に使う？"]
+                },
+                3: {
+                    reason: "HeはIとYou以外の単数主語なので、be動詞はisを使います。areは複数主語かYouで使います。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に、be動詞は何に変わる？", "areは主語がどんな時に使う？"]
+                },
+                4: {
+                    reason: "Itは単数主語なのでbe動詞はisです。areは使いません。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に、be動詞は何に変わる？", "be動詞のルールは？"]
+                },
+                5: {
+                    reason: "Sheは単数主語なのでbe動詞はisになります。areにしてしまうと主語と動詞が一致しません。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に、be動詞は何に変わる？", "be動詞のルールは？"]
+                },
+                6: {
+                    reason: "Thisは単数扱いなのでbe動詞はisです。this areにはなりません。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に、be動詞は何に変わる？", "be動詞のルールは？"]
+                },
+                7: {
+                    reason: "The dogは1匹を指す単数主語なのでbe動詞はisを使います。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に、be動詞は何に変わる？", "isは主語がどんな時に使う？"]
+                },
+                8: {
+                    reason: "Weは複数主語なのでbe動詞はareです。isは単数主語で使う形です。",
+                    reviewPoints: ["主語がYouや複数の時に、be動詞は何に変わる？", "areは主語がどんな時に使う？"]
+                },
+                9: {
+                    reason: "Youにはamは使いません。Youのbe動詞は必ずareです。",
+                    reviewPoints: ["主語がYouや複数の時に、be動詞は何に変わる？", "amは主語がどんな時に使う？"]
+                },
+                10: {
+                    reason: "Theyは複数主語なのでbe動詞はareを使います。isは単数主語用です。",
+                    reviewPoints: ["主語がYouや複数の時に、be動詞は何に変わる？", "be動詞のルールは？"]
+                },
+                11: {
+                    reason: "主語がIのときはbe動詞はamです。I areにはなりません。",
+                    reviewPoints: ["主語がIの時はbe動詞は何に変わる？", "amは主語がどんな時に使う？"]
+                },
+                12: {
+                    reason: "She and heは2人を並べた複数主語です。A and Bになった時点でbe動詞はareになります。",
+                    reviewPoints: ["主語がYouや複数の時に、be動詞は何に変わる？", "be動詞のルールは？"]
+                },
+                13: {
+                    reason: "My motherは1人なので単数主語です。単数主語にはisを使います。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に、be動詞は何に変わる？", "isは主語がどんな時に使う？"]
+                },
+                14: {
+                    reason: "My mother and your brotherは2人を並べた複数主語です。複数主語にはareを使います。",
+                    reviewPoints: ["主語がYouや複数の時に、be動詞は何に変わる？", "be動詞のルールは？"]
+                }
+            },
+            2026022605: {
+                1: {
+                    reason: "主語がYouのとき一般動詞は原形を使います。playsは三単現の形なのでここでは使えません。",
+                    reviewPoints: ["主語がIとYou以外の単数の時、一般動詞の形はどう変わる？", "一般動詞のルールは？"]
+                },
+                2: {
+                    reason: "Weは複数主語なので一般動詞は原形playです。playsは単数主語用です。",
+                    reviewPoints: ["一般動詞のルールは？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                3: {
+                    reason: "HeはIとYou以外の単数主語なので動詞にsをつけてspeaksにします。",
+                    reviewPoints: ["主語がIとYou以外の単数の時、一般動詞の形はどう変わる？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                4: {
+                    reason: "Our motherは単数主語なのでeatではなくeatsです。単数三人称にはs/esをつけます。",
+                    reviewPoints: ["主語がIとYou以外の単数の時、一般動詞の形はどう変わる？", "一般動詞のルールは？"]
+                },
+                5: {
+                    reason: "My studentsは複数主語なので動詞は原形watchを使います。watchesは単数主語用です。",
+                    reviewPoints: ["一般動詞のルールは？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                6: {
+                    reason: "Their fatherは単数主語なのでwriteではなくwritesです。主語が単数か複数かを先に判定します。",
+                    reviewPoints: ["主語がIとYou以外の単数の時、一般動詞の形はどう変わる？", "一般動詞のルールは？"]
+                },
+                7: {
+                    reason: "The sunは単数主語なのでriseにsをつけてrisesにします。",
+                    reviewPoints: ["主語がIとYou以外の単数の時、一般動詞の形はどう変わる？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                8: {
+                    reason: "Her brothersは複数主語なのでlikesではなくlikeです。複数主語は動詞を原形にします。",
+                    reviewPoints: ["一般動詞のルールは？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                9: {
+                    reason: "Your friendは単数主語なのでhaveはhasに変わります。haveだけは三単現で不規則にhasになります。",
+                    reviewPoints: ["主語がIとYou以外の単数の時、一般動詞の形はどう変わる？", "『have』に三単現のsをつけるとどうなる？"]
+                },
+                10: {
+                    reason: "Their brothersは複数主語なのでplaysではなくplayです。sはつけません。",
+                    reviewPoints: ["一般動詞のルールは？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                11: {
+                    reason: "主語がIのときは一般動詞を原形で使います。likesではなくlikeです。",
+                    reviewPoints: ["一般動詞のルールは？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                12: {
+                    reason: "Heは単数主語なので動詞にsをつけてlikesにします。",
+                    reviewPoints: ["主語がIとYou以外の単数の時、一般動詞の形はどう変わる？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                13: {
+                    reason: "Sheは単数主語ですが、haveの三単現はhavesではなくhasです。不規則変化をそのまま覚えます。",
+                    reviewPoints: ["『have』に三単現のsをつけるとどうなる？", "主語がIとYou以外の単数の時、一般動詞の形はどう変わる？"]
+                },
+                14: {
+                    reason: "My mother and your brotherはA and Bで複数主語なのでlikeです。likesにはしません。",
+                    reviewPoints: ["一般動詞のルールは？", "一般動詞にsやesをつける時はどんなとき？"]
+                },
+                15: {
+                    reason: "He and sheは2人を並べた複数主語なので動詞はlikeになります。",
+                    reviewPoints: ["一般動詞のルールは？", "一般動詞にsやesをつける時はどんなとき？"]
+                }
+            },
+            2026022606: {
+                1: {
+                    reason: "knowの後ろは目的語の位置なので、主格heではなく目的格himを使います。",
+                    reviewPoints: ["目的格を使う場所は？", "「彼を（だれを）」は？"]
+                },
+                2: {
+                    reason: "helpの後ろは目的語なのでmeが正解です。myは「私の＋名詞」で使う所有格です。",
+                    reviewPoints: ["目的格を使う場所は？", "所有格を使う形は？"]
+                },
+                3: {
+                    reason: "前置詞atの後ろは目的格を置くのでtheyではなくthemにします。",
+                    reviewPoints: ["前置詞のあとにおける代名詞は？", "「彼らを（だれを）」は？"]
+                },
+                4: {
+                    reason: "loveの後ろは目的語なので、主格sheではなく目的格herです。",
+                    reviewPoints: ["目的格を使う場所は？", "「彼女を（だれを）」は？"]
+                },
+                5: {
+                    reason: "be動詞の後ろで「私のもの」と名詞なしで言うのでmineを使います。myは後ろに名詞が必要です。",
+                    reviewPoints: ["所有代名詞を6つ言ってください", "所有格を使う形は？"]
+                },
+                6: {
+                    reason: "That house is ... の形では「彼のもの」を表すのでhisが正解です。himは目的格でこの位置には置けません。",
+                    reviewPoints: ["所有代名詞を6つ言ってください", "目的格を使う場所は？"]
+                },
+                7: {
+                    reason: "That desk is ... は「彼らのもの」を表す位置なのでtheirsを使います。themは目的格です。",
+                    reviewPoints: ["所有代名詞を6つ言ってください", "目的格を使う場所は？"]
+                },
+                8: {
+                    reason: "This book is ... は「私たちのもの」を置く位置なのでoursが正解です。usは目的格です。",
+                    reviewPoints: ["所有代名詞を6つ言ってください", "「私たちのもの（名詞なし）」は？"]
+                },
+                9: {
+                    reason: "nameの前は「だれの＋名詞」の形なのでHis nameになります。himは目的格で名詞を修飾できません。",
+                    reviewPoints: ["所有格を使う形は？", "「彼の（だれの＋名詞）」は？"]
+                },
+                10: {
+                    reason: "teacherの前は「私たちの＋名詞」なのでour teacherです。usは目的格で名詞の前には置けません。",
+                    reviewPoints: ["所有格を使う形は？", "「私たちの（だれの＋名詞）」は？"]
+                },
+                11: {
+                    reason: "「ケンの本」はKen's bookと、所有を表す' sをつけます。Ken bookのままでは所有の意味が出ません。",
+                    reviewPoints: ["所有格を使う形は？", "「my book」は日本語で？"]
+                },
+                12: {
+                    reason: "knowの後ろは目的語なのでsheではなくherを使います。",
+                    reviewPoints: ["目的格を使う場所は？", "「彼女を（だれを）」は？"]
+                },
+                13: {
+                    reason: "withの後ろは前置詞の目的語なのでheではなくhimです。",
+                    reviewPoints: ["前置詞のあとにおける代名詞は？", "「彼を（だれを）」は？"]
+                },
+                14: {
+                    reason: "That book is ... では「彼女のもの」を表すのでhersを使います。herは後ろに名詞が必要な所有格です。",
+                    reviewPoints: ["所有代名詞を6つ言ってください", "所有格を使う形は？"]
+                },
+                15: {
+                    reason: "father'sの前は「私の」を置くのでmy father'sが正解です。meは目的格なので名詞を修飾できません。",
+                    reviewPoints: ["所有格を使う形は？", "「私の（だれの＋名詞）」は？"]
+                }
+            },
+            2026022607: {
+                1: {
+                    reason: "a studentは名詞を説明するbe動詞の文なので、否定はam notを使います。do notは一般動詞の文で使う形です。",
+                    reviewPoints: ["be動詞の文章で否定文を作る際、「not」はどこに入れる？", "否定文を作る時に、まず明確に分けなければならない2つの文章の種類は何？"]
+                },
+                2: {
+                    reason: "この文は正しいです。be動詞isの後ろにnotを置いているので、be動詞の否定文の形になっています。",
+                    reviewPoints: ["be動詞の文章で否定文を作る際、「not」はどこに入れる？", "「It is a drop.」の否定文は？"]
+                },
+                3: {
+                    reason: "playは一般動詞なので、否定はdon't playの形にします。be動詞の否定形aren'tはここでは使えません。",
+                    reviewPoints: ["一般動詞の文章で否定文を作る際、どこに「not」を入れる？", "「You play tennis.」の否定文は？"]
+                },
+                4: {
+                    reason: "主語がHeの一般動詞文なので、否定はdoesn't playです。isn't playにはなりません。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に否定文を作る際、「do」はどう変化する？", "三人称単数の否定文で、「does not」を使った後の動詞の形はどうなる？"]
+                },
+                5: {
+                    reason: "a teacherを説明するbe動詞の文なので、否定はam notです。does notは一般動詞文で使う形です。",
+                    reviewPoints: ["be動詞の文章で否定文を作る際、「not」はどこに入れる？", "否定文を作る時に、まず明確に分けなければならない2つの文章の種類は何？"]
+                },
+                6: {
+                    reason: "この文は正しいです。You are not ... はbe動詞の否定文として正しい並びです。",
+                    reviewPoints: ["be動詞の文章で否定文を作る際、「not」はどこに入れる？", "be動詞の否定文を作るルールを短く言うと？"]
+                },
+                7: {
+                    reason: "be動詞文ではnotをbe動詞の後ろに置くのでis notの順になります。not isの順は不可です。",
+                    reviewPoints: ["be動詞の文章で否定文を作る際、「not」はどこに入れる？", "be動詞の否定文を作るルールを短く言うと？"]
+                },
+                8: {
+                    reason: "an English teacherは名詞を説明するbe動詞文なので、否定はis notです。does notは使いません。",
+                    reviewPoints: ["否定文を作る時に、まず明確に分けなければならない2つの文章の種類は何？", "be動詞の文章で否定文を作る際、「not」はどこに入れる？"]
+                },
+                9: {
+                    reason: "この文は正しいです。一般動詞playの前にdo notを置く形で、一般動詞の否定文になっています。",
+                    reviewPoints: ["一般動詞の文章で否定文を作る際、どこに「not」を入れる？", "「I do not play the guitar.」の形を確認"]
+                },
+                10: {
+                    reason: "teachersは名詞なのでbe動詞文です。否定はdon'tではなくaren'tを使います。",
+                    reviewPoints: ["否定文を作る時に、まず明確に分けなければならない2つの文章の種類は何？", "be動詞の文章で否定文を作る際、「not」はどこに入れる？"]
+                },
+                11: {
+                    reason: "KenはIとYou以外の単数主語なので、一般動詞の否定はdoesn't playです。don'tは使いません。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に否定文を作る際、「do」はどう変化する？", "三人称単数の否定文で、「does not」を使った後の動詞の形はどうなる？"]
+                },
+                12: {
+                    reason: "この文は正しいです。isn'tはis notの短縮形で、be動詞の否定文として正しい形です。",
+                    reviewPoints: ["be動詞の文章で否定文を作る際、「not」はどこに入れる？", "「It is a drop.」の否定文は？"]
+                },
+                13: {
+                    reason: "Theyは複数主語なので、一般動詞の否定はdon't goです。doesn't goは単数主語で使う形です。",
+                    reviewPoints: ["主語がIとYou以外の単数の時に否定文を作る際、「do」はどう変化する？", "一般動詞の文章で否定文を作る際、どこに「not」を入れる？"]
+                },
+                14: {
+                    reason: "一般動詞の否定はdoes not likeの順です。not does likeの語順にはなりません。",
+                    reviewPoints: ["一般動詞の文章で否定文を作る際、どこに「not」を入れる？", "主語がIとYou以外の単数の時に否定文を作る際、「do」はどう変化する？"]
+                },
+                15: {
+                    reason: "playは一般動詞なので、否定はdon't playです。aren't playはbe動詞文と一般動詞文が混ざってしまっています。",
+                    reviewPoints: ["否定文を作る時に、まず明確に分けなければならない2つの文章の種類は何？", "一般動詞の文章で否定文を作る際、どこに「not」を入れる？"]
+                }
+            },
+            2026022608: {
+                1: {
+                    reason: "be動詞の疑問文は主語とbe動詞を逆にします。You are ... ?ではなくAre you ... ?です。",
+                    reviewPoints: ["be動詞の文章を疑問文にする時の基本ルールは？", "「Are you ...?」の型確認"]
+                },
+                2: {
+                    reason: "答えの主語は代名詞に置き換えるのでthisではなくitです。No, it isn't. が正しい答え方です。",
+                    reviewPoints: ["答えの文の主語を「代名詞」に変えること", "答えの文の主語に「this」や「that」を使うことはできる？"]
+                },
+                3: {
+                    reason: "carsは複数主語なのでbe動詞はareを使います。IsではなくAreです。",
+                    reviewPoints: ["be動詞の文章を疑問文にする時の基本ルールは？", "主語が複数のときのbe動詞確認"]
+                },
+                4: {
+                    reason: "his sistersは複数主語の一般動詞文なので、文頭はDoesではなくDoです。",
+                    reviewPoints: ["一般動詞の文章を疑問文にする際、文頭に置く言葉は何？", "主語が複数ならDo、単数ならDoes"]
+                },
+                5: {
+                    reason: "studyは一般動詞なので疑問文はDoes he study ... ?にします。Isはbe動詞文で使う語です。",
+                    reviewPoints: ["一般動詞の文章を疑問文にする際、文頭に置く言葉は何？", "be動詞の文章を疑問文にする時の基本ルールは？"]
+                },
+                6: {
+                    reason: "be動詞文の疑問文なので、This is ... ?ではなくIs this ... ?と語順を逆にします。",
+                    reviewPoints: ["be動詞の文章を疑問文にする時の基本ルールは？", "「Is this ...?」の型確認"]
+                },
+                7: {
+                    reason: "your sisterは名詞を説明するbe動詞文なので、疑問文はIs she your sister?です。Doesは使いません。",
+                    reviewPoints: ["be動詞の文章を疑問文にする時の基本ルールは？", "一般動詞の文章を疑問文にする際、文頭に置く言葉は何？"]
+                },
+                8: {
+                    reason: "Doで始まる一般動詞の疑問文には、答えもdoで返します。Yes, I am. ではなくYes, I do.です。",
+                    reviewPoints: ["一般動詞の疑問文で答える際、文末には何を使う？", "「Do they play tennis?」に対する「Yes」の答え方は？"]
+                },
+                9: {
+                    reason: "playがある一般動詞文なので、疑問文はDo they play ... ?です。Areはbe動詞文で使います。",
+                    reviewPoints: ["一般動詞の文章を疑問文にする際、文頭に置く言葉は何？", "be動詞の文章を疑問文にする時の基本ルールは？"]
+                },
+                10: {
+                    reason: "sheはIとyou以外の単数主語なので、一般動詞疑問文の文頭はDoesです。",
+                    reviewPoints: ["一般動詞の文章を疑問文にする際、文頭に置く言葉は何？", "主語がIとyou以外の単数ならDoes"]
+                },
+                11: {
+                    reason: "一般動詞文を疑問文にするには文頭にDoを置きます。You go ... ?ではなくDo you go ... ?です。",
+                    reviewPoints: ["一般動詞の文章を疑問文にする際、文頭に置く言葉は何？", "疑問文の型: Do + 主語 + 動詞原形"]
+                },
+                12: {
+                    reason: "Doesを使った後ろの動詞は原形に戻すのでplaysではなくplayです。",
+                    reviewPoints: ["「He studies...」を疑問文（Does...）にする時、動詞の形はどうなる？", "doesの後ろは原形"]
+                },
+                13: {
+                    reason: "good friendsは名詞・状態を説明するbe動詞文なので、文頭はDoesではなくAreです。",
+                    reviewPoints: ["be動詞の文章を疑問文にする時の基本ルールは？", "一般動詞とbe動詞の見分け"]
+                },
+                14: {
+                    reason: "Doesの後ろは動詞原形なので、usually gets upではなくusually get upにします。",
+                    reviewPoints: ["「He studies...」を疑問文（Does...）にする時、動詞の形はどうなる？", "doesの後ろは原形"]
+                },
+                15: {
+                    reason: "be動詞文の疑問文は主語とbe動詞を逆にするので、My pen is ... ?ではなくIs my pen ... ?です。",
+                    reviewPoints: ["be動詞の文章を疑問文にする時の基本ルールは？", "「Is this ...?」の型確認"]
+                }
+            }
+        };
+
         // ========== COURSE DATA ==========
         const COURSES = [
             {
@@ -588,6 +897,20 @@ import "./styles.css";
                     url: "https://youtu.be/fASxe82gL2g?si=dA_eNTQYcPxjzEPL",
                     title: "中1英語・名詞/冠詞の使い方（導入動画）"
                 },
+                videoFocusNotes: {
+                    title: "動画を見る前に、タイトルとこの6つをノートに書こう",
+                    description: "タイトルを書いてから、6つのポイントを書く流れで進めよう。",
+                    requireTitleFirst: true,
+                    unlockLabel: "タイトルとポイントを書いた。動画を見る",
+                    items: [
+                        "名詞の意味は？",
+                        "名詞を大きく2種類に分けると何と何？",
+                        "固有名詞を書く時、必ず最初の文字をどうする？",
+                        "普通の名詞は単体で使うことができる？",
+                        "a と an の使い分けのルールは？",
+                        "theのイメージは、"
+                    ]
+                },
                 stepOrder: ['videoIntro', 'flashcard', 'sort', 'fillin', 'complete'],
                 flashcards: [
                     { id: 1, front: "名詞の意味は？", back: "①「人やモノやコトの名前」\n②「だれが、や、だれ・なにの位置に入る言葉」", hint: "名詞は名前であり、文の主要ポジションにも入ります" },
@@ -603,7 +926,7 @@ import "./styles.css";
                     { id: 11, front: "a と an の使い分けルールは？", back: "直後の名詞の発音が子音なら a、母音なら an。", hint: "スペルより発音で判断します" },
                     { id: 12, front: "hour につくのは a / an？理由は？", back: "an hour。スペルはhだが発音が母音から始まるため。", hint: "発音は「アワー」" },
                     { id: 13, front: "university につくのは a / an？理由は？", back: "a university。発音が「ユ」で始まり母音発音ではないため。", hint: "発音は「ユニバーシティ」" },
-                    { id: 14, front: "the のコアイメージは？", back: "その場にいる人全員が「せーの」で1つに決まる感覚。", hint: "共通認識の1つです" },
+                    { id: 14, front: "theの意味は？", back: "その場にいる人全員が「せーの」で1つに決まる感覚。", hint: "共通認識の1つです" },
                     { id: 15, front: "sun / moon に the がつく理由は？", back: "みんなが見て同じ1つに決まるから。", hint: "唯一性が高い名詞です" },
                     { id: 16, front: "the は必ず「その〜」と訳す必要がある？", back: "訳さなくてよい。英語の感覚として the がつく。", hint: "日本語訳より英語の感覚を優先します" },
                     { id: 17, front: "star には基本的に the がつく？理由は？", back: "つかないことが多い。星は多く、1つに特定しにくいから。", hint: "1つに決まるかどうかが鍵です" },
@@ -676,11 +999,29 @@ import "./styles.css";
                     url: "https://youtu.be/PWoT7ifM0lU?si=9Qwhpl3jK6Qs7UEq",
                     title: "所有格と形容詞（導入動画）"
                 },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この5つをノートに書こう",
+                    description: "先にポイントを言語化してから見ると、理解が速くなります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "5つ書いた。動画を見る",
+                    items: [
+                        "所有格とは、どのような意味を表す言葉か？",
+                        "私の、あなたの、彼の、彼女の、彼らの、彼女らの、それらの、私たちの、それのを英語にすると？",
+                        "形容詞とは、どのような働きをする？",
+                        "形容詞はどこにくっつける？",
+                        "a /an 、the、所有格、this. thatは一緒に使える？"
+                    ]
+                },
                 stepOrder: ['videoIntro', 'flashcard', 'instant', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "固有名詞以外の普通の名詞は単体で使えないため、どうしなければならないか？", back: "必ず前になにか言葉をつけてあげないといけない", hint: "普通名詞は丸裸で使えません" },
                     { id: 2, front: "所有格とは、どのような意味を表す言葉か？", back: "誰のものかを表す\n「〜の」（私の、あなたの、彼の、彼女の、それらのなど）", hint: "所有格は ownership を表します" },
                     { id: 3, front: "所有格の正しい覚え方は？", back: "my pen, your desk のように、後ろの言葉と必ず1セットで覚えてしまうこと", hint: "所有格は後ろの名詞とセット" },
+                    { id: 31, front: "所有格myの意味は？「私の」＊「私」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「私の」", hint: "" },
+                    { id: 32, front: "所有格yourの意味は？「あなたの」＊「あなた」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「あなたの」", hint: "" },
+                    { id: 33, front: "所有格hisの意味は？「彼の」＊「彼」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「彼の」", hint: "" },
+                    { id: 34, front: "所有格herの意味は？「彼女の」＊「彼女」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「彼女の」", hint: "" },
+                    { id: 35, front: "所有格ourの意味は？「私たちの」＊「私たち」とだけ答えた人は必ず「の」を入れて答えること！！", back: "「私たちの」", hint: "" },
                     { id: 4, front: "わたしのねこ", back: "my cat", hint: "my + 名詞" },
                     { id: 5, front: "あなたのねこ", back: "your cat", hint: "your + 名詞" },
                     { id: 6, front: "彼のねこ", back: "his cat", hint: "his + 名詞" },
@@ -704,10 +1045,11 @@ import "./styles.css";
                     { id: 24, front: "形容詞の「new」の意味は？", back: "新しい", hint: "new = 新しい" },
                     { id: 25, front: "形容詞の「busy」の意味は？", back: "忙しい", hint: "busy = 忙しい" },
                     { id: 26, front: "形容詞の「kind」の意味は？", back: "親切な", hint: "kind = 親切な" },
-                    { id: 27, front: "「私の古い家」を英語にする際の正しい語順とフレーズを答えよ。", back: "所有格 + 形容詞 + 名詞（my old house）", hint: "my / old / house の順" },
-                    { id: 28, front: "「この新しい車」を英語で答えよ。", back: "this new car", hint: "this + new + car" },
-                    { id: 29, front: "「その大きなカバン」を英語で答えよ。", back: "the big bag", hint: "the + big + bag" },
-                    { id: 30, front: "「一人の良い先生」を英語で答えよ。", back: "a good teacher", hint: "a + good + teacher" }
+                    { id: 27, front: "a /an 、the、所有格、this. thatは一緒に使える？", back: "一緒に使うことができない", hint: "どれか1つを名詞の前に使います" },
+                    { id: 28, front: "「私の古い家」を英語にする際の正しい語順とフレーズを答えよ。", back: "所有格 + 形容詞 + 名詞（my old house）", hint: "my / old / house の順" },
+                    { id: 29, front: "「この新しい車」を英語で答えよ。", back: "this new car", hint: "this + new + car" },
+                    { id: 30, front: "「その大きなカバン」を英語で答えよ。", back: "the big bag", hint: "the + big + bag" },
+                    { id: 31, front: "「一人の良い先生」を英語で答えよ。", back: "a good teacher", hint: "a + good + teacher" }
                 ],
                 instantQuestions: [
                     { id: 1, jp: "わたしのねこ", answer: "my cat" },
@@ -722,7 +1064,7 @@ import "./styles.css";
                     { id: 10, jp: "あの新しい車", answer: "that new car" },
                     { id: 11, jp: "新しい車", answer: "a new car" },
                     { id: 12, jp: "私の新しい車", answer: "my new car" },
-                    { id: 13, jp: "それらの新しい車", answer: "thier new car" },
+                    { id: 13, jp: "それらの新しい車", answer: "their new car" },
                     { id: 14, jp: "その新しい車", answer: "the new car" },
                     { id: 15, jp: "わたしの車", answer: "my car" },
                     { id: 16, jp: "あなたの家", answer: "your house" },
@@ -760,7 +1102,7 @@ import "./styles.css";
                     { id: 12, translation: "そのねこ", prompt: "( ) cat", answer: "the" },
                     { id: 13, translation: "新しい車", prompt: "( ) ( ) car", answer: "a new" },
                     { id: 14, translation: "私の新しい車", prompt: "( ) ( ) car", answer: "my new" },
-                    { id: 15, translation: "それらの新しい車", prompt: "( ) ( ) car", answer: "thier new" },
+                    { id: 15, translation: "それらの新しい車", prompt: "( ) ( ) car", answer: "their new" },
                     { id: 16, translation: "その新しい車", prompt: "( ) ( ) car", answer: "the new" },
                     { id: 17, translation: "この新しい車", prompt: "( ) ( ) car", answer: "this new" },
                     { id: 18, translation: "あの新しい車", prompt: "( ) ( ) car", answer: "that new" },
@@ -798,7 +1140,7 @@ import "./styles.css";
                     { id: 10, jp: "あの新しい車", answer: "that new car" },
                     { id: 11, jp: "新しい車", answer: "a new car" },
                     { id: 12, jp: "私の新しい車", answer: "my new car" },
-                    { id: 13, jp: "それらの新しい車", answer: "thier new car" },
+                    { id: 13, jp: "それらの新しい車", answer: "their new car" },
                     { id: 14, jp: "その新しい車", answer: "the new car" },
                     { id: 15, jp: "わたしの車", answer: "my car" },
                     { id: 16, jp: "あなたの家", answer: "your house" },
@@ -826,10 +1168,29 @@ import "./styles.css";
             {
                 id: 2026022601,
                 title: "名詞の複数形",
-                stepOrder: ['flashcard', 'instant', 'fillin', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/3JBN542xA0o?si=KqGUxFyX-B07ZGMr",
+                    title: "名詞の複数形（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この6つをノートに書こう",
+                    description: "先にポイントを書いてから見ると、複数形のルールが整理しやすくなります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "6つ書いた。動画を見る",
+                    items: [
+                        "日本語と英語の数え方の違いは？",
+                        "英語で、名詞が「2つ以上（複数）」になった場合、どうするか？",
+                        "複数で名詞の語尾が「s, sh, o, ch, x」の時は、何をつけるか？",
+                        "名詞の語尾が「子音 ＋ y」の時は、どう変化させるか？",
+                        "名詞の語尾が「f」または「fe」の時は、どう変化させるか？",
+                        "複数形の発音の仕方は？"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'instant', 'fillin', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "日本語の数え方の特徴（面倒くさい点）は何か？", back: "犬は「匹」、馬は「頭」、本は「冊」など、名詞によって数える「単位」が変わること", hint: "名詞ごとに単位が変わります" },
                     { id: 2, front: "英語の数え方の特徴（シンプルな点）は何か？", back: "単位がなく、名詞の前に「a」や「数字」を置くだけで数えられること", hint: "a/数字 + 名詞で数えます" },
+                    { id: 100, front: "日本語と英語の数え方の違いは？", back: "日本語は単位があるが、英語は数字をつけるだけ", hint: "日本語は単位、英語は数字で数える" },
                     { id: 3, front: "英語で、名詞が「2つ以上（複数）」になった場合、基本はどうするか？", back: "名詞の後ろに「s」をつける", hint: "基本は -s" },
                     { id: 4, front: "（1匹の）犬", back: "a dog", hint: "a + 名詞" },
                     { id: 5, front: "（1頭の）馬", back: "a horse", hint: "a + 名詞" },
@@ -1015,7 +1376,25 @@ import "./styles.css";
             {
                 id: 2026022602,
                 title: "数えられない名詞",
-                stepOrder: ['flashcard', 'instant', 'fillin', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/kvUh1SH_eA0?si=Ke8KcP-vY2u_l5Q7",
+                    title: "数えられない名詞（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この6つをノートに書こう",
+                    description: "先に問いを立てておくと、可算・不可算の理解が深まります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "6つ書いた。動画を見る",
+                    items: [
+                        "日本語と英語の違い？",
+                        "「数えられる名詞」とは、どのような特徴を持つものか？",
+                        "「数えられない名詞」とは、どのような特徴を持つものか？",
+                        "数えられない名詞には「つけられないもの」が2つある。",
+                        "数えられない名詞を数えたい時はどうするか？",
+                        "名詞を見た時、判断する「2つの視点」"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'instant', 'fillin', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "日本語は名詞を数えるとき、どのような特徴があるか？", back: "「本なら1冊」「イスなら1脚」のように、何でもかんでも「単位」をつけて数える", hint: "日本語は単位で数えます" },
                     { id: 2, front: "英語における名詞の考え方で、日本語にはない「新しい考え方（分類）」は何か？", back: "「数えられる名詞」と「数えられない名詞」があること", hint: "英語はまず可算/不可算を判断します" },
@@ -1164,7 +1543,23 @@ import "./styles.css";
             {
                 id: 2026022603,
                 title: "代名詞",
-                stepOrder: ['flashcard', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/rRnEIBTqcYo?si=thOQQ4L4DBzlu52h",
+                    title: "代名詞（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この4つをノートに書こう",
+                    description: "先に論点を整理すると、代名詞の使い分けが定着しやすくなります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "4つ書いた。動画を見る",
+                    items: [
+                        "英語の主格（〜は、〜が）となる代名詞は全部で何個あるか？",
+                        "名詞を代名詞に言い換えるとき、まず何を確認するか？",
+                        "英語の文で「絶対に欠かせないもの」は何か？",
+                        "主語がない文を英語にする時はどうする？"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "「代名詞」とはどのような言葉か？", back: "一度言った名詞の代わりをする（言い換える）言葉", hint: "名詞の言い換えです" },
                     { id: 2, front: "英語の主格（〜は、〜が）となる代名詞は全部で何個あるか？", back: "8個", hint: "I, you, he, she, it, we, you, they" },
@@ -1270,7 +1665,22 @@ import "./styles.css";
             {
                 id: 2026022604,
                 title: "be動詞(現在形の肯定文)",
-                stepOrder: ['flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/zMSe2QX50DU?si=Oi2ke93gDmI0CRRr",
+                    title: "be動詞(現在形の肯定文)（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この3つをノートに書こう",
+                    description: "この3点を先に整理してから見ると、be動詞の理解が早くなります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "3つ書いた。動画を見る",
+                    items: [
+                        "be動詞と一般動詞の区別は？",
+                        "be動詞を3つに変化します。何でしょうか？",
+                        "be動詞の使い分けは？"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "英語の語順は何種類ある？", back: "2種類「です文」と「する文」", hint: "文の型は2つ" },
                     { id: 2, front: "英語の語順の1種類目は？", back: "「です文」：だれが → です → 〜(ニョロ) → 所 → 状 → 時", hint: "be動詞の文" },
@@ -1473,7 +1883,23 @@ import "./styles.css";
             {
                 id: 2026022605,
                 title: "一般動詞(現在形の肯定文)",
-                stepOrder: ['flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/l4xw4LsqX4E?si=26zHrxLUL8afd4j7",
+                    title: "一般動詞(現在形の肯定文)（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この4つをノートに書こう",
+                    description: "先にルールの軸を整理しておくと、一般動詞の変化がスムーズに理解できます。",
+                    requireTitleFirst: true,
+                    unlockLabel: "4つ書いた。動画を見る",
+                    items: [
+                        "一般動詞の意味は？",
+                        "主語がIとYou以外の単数の時、一般動詞の形はどう変わる？",
+                        "一般動詞にsやesをつける時はどんなとき？",
+                        "一般動詞にesをつける時のルールは？"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "英語の語順は何種類ある？", back: "2種類「です文」と「する文」", hint: "文の型は2つ" },
                     { id: 2, front: "英語の語順の1種類目は？", back: "「です文」：だれが → です → 〜(ニョロ)→ 所 → 状→時", hint: "be動詞の文" },
@@ -1641,7 +2067,23 @@ import "./styles.css";
             {
                 id: 2026022606,
                 title: "代名詞(主格・目的格)",
-                stepOrder: ['flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/ZNGqZuRKm9U?si=em9_9U_Vz8K_Dhpp",
+                    title: "代名詞(主格・目的格)（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この4つをノートに書こう",
+                    description: "先に代名詞の4分類を整理してから見ると、使い分けが一気に明確になります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "4つ書いた。動画を見る",
+                    items: [
+                        "「だれが（主語）」に置く代名詞は？",
+                        "「だれを／なにを（目的語）」に置く代名詞は？",
+                        "「だれの＋名詞」にする代名詞は？",
+                        "だれのものを表す代名詞は？"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "代名詞とは何？", back: "名詞の代わりに使う語", hint: "名詞の言い換え" },
                     { id: 2, front: "代名詞を使う主な理由は？", back: "同じ名詞のくり返しを避けるため", hint: "繰り返しを防ぐ" },
@@ -1858,7 +2300,23 @@ import "./styles.css";
             {
                 id: 2026022607,
                 title: "否定文",
-                stepOrder: ['flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/YRXvR6XgWNs?si=1CEmAzkqNS7Z8QiK",
+                    title: "否定文（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この4つをノートに書こう",
+                    description: "先に否定文の型を整理してから見ると、ミスが減って定着しやすくなります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "4つ書いた。動画を見る",
+                    items: [
+                        "否定文を作る時に、明確にする必要があるのは？",
+                        "be動詞の否定文の作り方は？",
+                        "一般動詞の否定文の作り方は？",
+                        "頻度を表す副詞を入れる場所のルールは？"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
                 flashcards: [
                     { id: 1, front: "否定文を作る時に、まず明確に分けなければならない2つの文章の種類は何？", back: "be動詞の文章と、一般動詞の文章", hint: "まず文の種類を判定" },
                     { id: 2, front: "be動詞の文章で否定文を作る際、「not」はどこに入れる？", back: "be動詞の後ろ", hint: "be + not" },
@@ -2028,7 +2486,22 @@ import "./styles.css";
             {
                 id: 2026022608,
                 title: "疑問文",
-                stepOrder: ['flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
+                introVideo: {
+                    url: "https://youtu.be/M9YwsE4Krgc?si=7CXPtOhyLvvglLH6",
+                    title: "疑問文（導入動画）"
+                },
+                videoFocusNotes: {
+                    title: "動画を見る前に、この3つをノートに書こう",
+                    description: "疑問文の型と答え方を先に整理してから見ると、実践で迷いにくくなります。",
+                    requireTitleFirst: true,
+                    unlockLabel: "3つ書いた。動画を見る",
+                    items: [
+                        "be動詞の文を疑問文にするには？",
+                        "一般動詞の文を疑問文にするには？",
+                        "疑問文の答え方のポイントは？"
+                    ]
+                },
+                stepOrder: ['videoIntro', 'flashcard', 'error', 'sort', 'instant', 'writing', 'complete'],
                 showInactiveSortBoxes: true,
                 sortFolders: [
                     { key: 'lead', label: 'しますか？/ですか？', color: 'bg-pink-100 border-pink-300 text-pink-900' },
@@ -2587,14 +3060,14 @@ import "./styles.css";
                 if (typeof onComplete === "function") onComplete();
             };
 
-            return { queue, queuePos, currentIndex, currentItem, markWrong, advance };
+            return { queue, queuePos, retryQueue, currentIndex, currentItem, markWrong, advance };
         };
 
         // ========== COURSE SELECTION ==========
         const CourseSelect = ({ onSelect }) => (
             <div className="animate-fade-in max-w-2xl mx-auto p-4">
                 <div className="space-y-3">
-                    {COURSES.filter(course => !HIDDEN_COURSE_IDS.has(course.id)).map(course => (
+                    {COURSES.filter(course => !HIDDEN_COURSE_IDS.has(course.id)).map((course, index) => (
                         <button
                             key={course.id}
                             onClick={() => onSelect(course)}
@@ -2602,7 +3075,7 @@ import "./styles.css";
                         >
                             <div className="flex items-center gap-3">
                                 <BookOpen className="text-indigo-500" size={24} />
-                                <span className="font-bold text-slate-800 text-left">{course.title}</span>
+                                <span className="font-bold text-slate-800 text-left">{`ステージ${index + 1}：${course.title}`}</span>
                             </div>
                             <ChevronRight className="text-slate-400 group-hover:text-indigo-500 transition" />
                         </button>
@@ -2658,53 +3131,124 @@ import "./styles.css";
             const video = course?.introVideo;
             if (!video) return null;
             const embedUrl = toYouTubeEmbedUrl(video.url);
+            const focusNotes = course?.videoFocusNotes;
+            const requireTitleFirst = Boolean(focusNotes?.requireTitleFirst);
+            const focusItems = Array.isArray(focusNotes?.items) ? focusNotes.items : [];
+            const [titleChecked, setTitleChecked] = useState(!requireTitleFirst);
+            const [checkedItems, setCheckedItems] = useState(() => focusItems.map(() => false));
+            const [showVideo, setShowVideo] = useState(!requireTitleFirst && focusItems.length === 0);
+            const allPointsChecked = checkedItems.length === 0 || checkedItems.every(Boolean);
+            const allChecked = titleChecked && allPointsChecked;
+
+            useEffect(() => {
+                setTitleChecked(!requireTitleFirst);
+                setCheckedItems(focusItems.map(() => false));
+                setShowVideo(!requireTitleFirst && focusItems.length === 0);
+            }, [course?.id]);
+
+            const toggleChecked = (index) => {
+                setCheckedItems(prev => prev.map((value, i) => (i === index ? !value : value)));
+            };
 
             return (
                 <div className="animate-fade-in max-w-3xl mx-auto p-4">
                     <div className="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 text-center">
-                        <h2 className="text-2xl font-bold text-slate-800 mb-4">最初に動画を見てください</h2>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-4">
+                            {showVideo ? "最初に動画を見てください" : (focusNotes?.title || "動画を見る前の準備")}
+                        </h2>
                         <p className="text-slate-600 mb-2">{course.title}</p>
-                        <p className="text-slate-500 mb-6">{video.title}</p>
+                        {!showVideo && focusNotes?.description && (
+                            <p className="text-slate-500 mb-6">{focusNotes.description}</p>
+                        )}
+                        {showVideo && <p className="text-slate-500 mb-6">{video.title}</p>}
 
-                        <div className="mb-6">
-                            <div className="relative w-full pt-[56.25%] rounded-xl overflow-hidden border border-slate-200 bg-black">
-                                {embedUrl ? (
-                                    <iframe
-                                        className="absolute inset-0 w-full h-full"
-                                        src={embedUrl}
-                                        title={video.title}
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                        referrerPolicy="strict-origin-when-cross-origin"
-                                        allowFullScreen
-                                    />
-                                ) : (
-                                    <a
-                                        href={video.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="absolute inset-0 flex items-center justify-center text-white font-bold hover:underline"
-                                    >
-                                        動画を開く
-                                    </a>
-                                )}
+                        {!showVideo && (requireTitleFirst || focusItems.length > 0) ? (
+                            <div className="mb-6 text-left bg-indigo-50 border border-indigo-100 rounded-xl p-5">
+                                <p className="text-xs font-bold text-indigo-500 tracking-wide mb-3">動画を見る前にノートへ</p>
+                                <div className="space-y-4">
+                                    {requireTitleFirst && (
+                                        <div className="bg-white border border-indigo-100 rounded-lg p-4">
+                                            <p className="text-sm font-bold text-slate-800 mb-2">1. まずコースタイトルを書く</p>
+                                            <p className="text-slate-700 mb-3">{course.title}</p>
+                                            <label className="flex items-start gap-3 text-slate-800 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    className="mt-1 h-4 w-4 accent-indigo-600"
+                                                    checked={titleChecked}
+                                                    onChange={() => setTitleChecked(prev => !prev)}
+                                                />
+                                                <span>タイトルをノートに書いた</span>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {focusItems.length > 0 && (
+                                        <div className="bg-white border border-indigo-100 rounded-lg p-4">
+                                            <p className="text-sm font-bold text-slate-800 mb-1">2. 次にポイントを書く</p>
+                                            <p className="text-xs text-slate-600 mb-3">ノートにまとめるのが苦手な人は、1つのポイントを書いたら4行あけよう。</p>
+                                            <div className="space-y-3">
+                                                {focusItems.map((item, index) => (
+                                                    <label key={`video-focus-${index}`} className={`flex items-start gap-3 text-slate-800 ${titleChecked ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="mt-1 h-4 w-4 accent-indigo-600"
+                                                            checked={checkedItems[index] || false}
+                                                            onChange={() => toggleChecked(index)}
+                                                            disabled={!titleChecked}
+                                                        />
+                                                        <span>{item}</span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="mb-6">
+                                <div className="relative w-full pt-[56.25%] rounded-xl overflow-hidden border border-slate-200 bg-black">
+                                    {embedUrl ? (
+                                        <iframe
+                                            className="absolute inset-0 w-full h-full"
+                                            src={embedUrl}
+                                            title={video.title}
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            referrerPolicy="strict-origin-when-cross-origin"
+                                            allowFullScreen
+                                        />
+                                    ) : (
+                                        <a
+                                            href={video.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="absolute inset-0 flex items-center justify-center text-white font-bold hover:underline"
+                                        >
+                                            動画を開く
+                                        </a>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex flex-col sm:flex-row justify-center gap-3">
-                            <a
-                                href={video.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition"
-                            >
-                                別タブで開く
-                            </a>
-                            <button
-                                onClick={onComplete}
-                                className="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition"
-                            >
-                                動画を見たので次へ
-                            </button>
+                            {!showVideo ? (
+                                <button
+                                    onClick={() => setShowVideo(true)}
+                                    disabled={!allChecked}
+                                    className="px-6 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    {focusNotes?.unlockLabel || "ノートに書いたので動画を見る"}
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={onComplete}
+                                        className="px-6 py-3 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200 transition"
+                                    >
+                                        動画を見たので次へ
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -2727,10 +3271,8 @@ import "./styles.css";
                 if (!currentCard && flashcards.length > 0) onComplete();
             }, [currentCard, flashcards, onComplete]);
 
-            if (!currentCard) return null;
-
-            const handleKnown = (e) => {
-                e.stopPropagation();
+            const markKnown = () => {
+                if (!currentCard) return;
                 setIsFlipped(false);
                 setMasteredIds(prev => {
                     const next = new Set(prev);
@@ -2739,8 +3281,9 @@ import "./styles.css";
                 });
                 flow.advance(onComplete);
             };
-            const handleUnknown = (e) => {
-                e.stopPropagation();
+
+            const markUnknown = () => {
+                if (!currentCard) return;
                 setIsFlipped(false);
                 flow.markWrong();
                 flow.advance(onComplete);
@@ -2748,17 +3291,65 @@ import "./styles.css";
                 setTimeout(() => setResetMessage(""), 2000);
             };
 
+            const handleKnown = (e) => {
+                if (e) e.stopPropagation();
+                markKnown();
+            };
+
+            const handleUnknown = (e) => {
+                if (e) e.stopPropagation();
+                markUnknown();
+            };
+
+            useEffect(() => {
+                const isInteractiveTarget = (target) => {
+                    if (!target || !(target instanceof HTMLElement)) return false;
+                    const tag = target.tagName;
+                    return (
+                        target.isContentEditable ||
+                        tag === "INPUT" ||
+                        tag === "TEXTAREA" ||
+                        tag === "SELECT" ||
+                        tag === "BUTTON" ||
+                        tag === "A"
+                    );
+                };
+
+                const onKeyDown = (e) => {
+                    if (e.defaultPrevented || e.repeat) return;
+                    if (e.metaKey || e.ctrlKey || e.altKey) return;
+                    if (isInteractiveTarget(e.target)) return;
+
+                    if (e.code === "Space") {
+                        e.preventDefault();
+                        setIsFlipped(prev => !prev);
+                        return;
+                    }
+
+                    if (!isFlipped) return;
+
+                    if (e.key === "ArrowRight") {
+                        e.preventDefault();
+                        markKnown();
+                    } else if (e.key === "ArrowLeft") {
+                        e.preventDefault();
+                        markUnknown();
+                    }
+                };
+
+                window.addEventListener("keydown", onKeyDown);
+                return () => window.removeEventListener("keydown", onKeyDown);
+            }, [isFlipped, currentCard, markKnown, markUnknown]);
+
+            if (!currentCard) return null;
+
             return (
                 <div className="flex flex-col items-center animate-fade-in max-w-2xl mx-auto w-full relative p-4">
                     <div className="flex justify-between w-full items-center mb-4">
                         <h3 className="text-xl font-bold text-indigo-900 flex items-center gap-2"><Brain className="text-indigo-500" /> 一問一答</h3>
                         <button onClick={onComplete} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Step</button>
                     </div>
-                    {resetMessage && (
-                        <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-white/80 rounded-xl backdrop-blur-sm animate-bounce">
-                            <div className="bg-red-500 text-white px-6 py-4 rounded-xl shadow-xl font-bold text-lg flex items-center gap-2"><AlertTriangle /> {resetMessage}</div>
-                        </div>
-                    )}
+                    <div className="h-6 mb-2 text-sm text-slate-600">{resetMessage}</div>
                     <div className="w-full bg-slate-200 rounded-full h-2 mb-6 overflow-hidden"><div className="bg-green-500 h-full transition-all duration-500" style={{ width: `${(masteredIds.size / flashcards.length) * 100}%` }}></div></div>
                     <p className="text-slate-500 text-sm mb-4">習得済み: <span className="font-bold text-indigo-600">{masteredIds.size}</span> / {flashcards.length}</p>
                     <div className="w-full h-80 cursor-pointer group mb-8" onClick={() => setIsFlipped(!isFlipped)}>
@@ -2766,7 +3357,7 @@ import "./styles.css";
                             <div className="w-full h-full bg-white border-2 border-indigo-100 rounded-2xl shadow-xl flex flex-col items-center justify-center p-8 text-center hover:border-indigo-300 transition-colors relative">
                                 <span className="absolute top-4 left-4 bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">Question</span>
                                 <h4 className="text-2xl font-bold text-slate-800">{currentCard.front}</h4>
-                                <p className="text-slate-400 text-sm mt-8 flex items-center gap-2"><RotateCcw size={14} /> タップして答えを見る</p>
+                                <p className="text-slate-400 text-sm mt-8 flex items-center gap-2"><RotateCcw size={14} /> タップ / Spaceで答えを見る</p>
                             </div>
                         ) : (
                             <div className="w-full h-full bg-indigo-600 text-white rounded-2xl shadow-xl flex flex-col items-center justify-center p-8 text-center relative">
@@ -2777,10 +3368,13 @@ import "./styles.css";
                         )}
                     </div>
                     {isFlipped ? (
-                        <div className="flex gap-4 w-full">
-                            <button onClick={handleUnknown} className="flex-1 bg-red-100 text-red-600 py-4 rounded-xl font-bold flex flex-col items-center hover:bg-red-200 active:scale-95 transition"><ThumbsDown size={24} className="mb-1" /><span className="text-xs">あとで再挑戦</span></button>
-                            <button onClick={handleKnown} className="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold flex flex-col items-center hover:bg-indigo-700 active:scale-95 transition shadow-lg"><ThumbsUp size={24} className="mb-1" /><span className="text-xs">覚えた！</span></button>
-                        </div>
+                        <>
+                            <div className="flex gap-4 w-full">
+                                <button onClick={handleUnknown} className="flex-1 bg-red-100 text-red-600 py-4 rounded-xl font-bold flex flex-col items-center hover:bg-red-200 active:scale-95 transition"><ThumbsDown size={24} className="mb-1" /><span className="text-xs">あとで再挑戦</span></button>
+                                <button onClick={handleKnown} className="flex-1 bg-indigo-600 text-white py-4 rounded-xl font-bold flex flex-col items-center hover:bg-indigo-700 active:scale-95 transition shadow-lg"><ThumbsUp size={24} className="mb-1" /><span className="text-xs">覚えた！</span></button>
+                            </div>
+                            <p className="text-slate-400 text-xs mt-3">キーボード: ← あとで再挑戦 / → 覚えた</p>
+                        </>
                     ) : (
                         <p className="text-slate-400 text-sm mt-4 h-16 flex items-center">答えを確認してください</p>
                     )}
@@ -3033,6 +3627,11 @@ import "./styles.css";
             const [showAnswer, setShowAnswer] = useState(false);
             const [feedback, setFeedback] = useState("");
             const currentQ = flow.currentItem;
+            const totalQuestions = questions.length;
+            const remainingCorrectToFinish = Math.max(
+                (flow.queue.length - flow.queuePos) + flow.retryQueue.length,
+                0
+            );
 
             useEffect(() => {
                 if (questions.length === 0) onComplete();
@@ -3051,6 +3650,56 @@ import "./styles.css";
                 speakEnglish(currentQ.answer);
             };
 
+            const markSaid = () => {
+                setFeedback("OK!");
+                nextQuestion();
+            };
+
+            const markNotSaid = () => {
+                setFeedback("次で取り返そう");
+                nextQuestion({ markWrong: true });
+            };
+
+            useEffect(() => {
+                const isInteractiveTarget = (target) => {
+                    if (!target || !(target instanceof HTMLElement)) return false;
+                    const tag = target.tagName;
+                    return (
+                        target.isContentEditable ||
+                        tag === "INPUT" ||
+                        tag === "TEXTAREA" ||
+                        tag === "SELECT" ||
+                        tag === "BUTTON" ||
+                        tag === "A"
+                    );
+                };
+
+                const onKeyDown = (e) => {
+                    if (e.defaultPrevented || e.repeat) return;
+                    if (e.metaKey || e.ctrlKey || e.altKey) return;
+                    if (isInteractiveTarget(e.target)) return;
+
+                    if (!showAnswer && e.code === "Space") {
+                        e.preventDefault();
+                        revealAnswer();
+                        return;
+                    }
+
+                    if (!showAnswer) return;
+
+                    if (e.key === "ArrowRight") {
+                        e.preventDefault();
+                        markSaid();
+                    } else if (e.key === "ArrowLeft") {
+                        e.preventDefault();
+                        markNotSaid();
+                    }
+                };
+
+                window.addEventListener("keydown", onKeyDown);
+                return () => window.removeEventListener("keydown", onKeyDown);
+            }, [showAnswer, currentQ]);
+
             if (!currentQ) return null;
 
             return (
@@ -3060,6 +3709,11 @@ import "./styles.css";
                         <button onClick={() => nextQuestion()} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Question</button>
                     </div>
                     <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center">
+                        <div className="mb-4 text-sm text-slate-600">
+                            <span className="font-bold text-slate-700">問題数: {totalQuestions}問</span>
+                            <span className="mx-2 text-slate-300">|</span>
+                            <span>あと<span className="font-bold text-indigo-600">{remainingCorrectToFinish}</span>問正解で完了</span>
+                        </div>
                         <h2 className="text-xl font-bold text-slate-800 mb-6">Question {flow.queuePos + 1}</h2>
                         <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-left">
                             <p className="text-xs font-bold text-indigo-500 tracking-wide mb-1">問題文</p>
@@ -3088,18 +3742,22 @@ import "./styles.css";
                                 >
                                     解答を確認
                                 </button>
+                                <p className="text-slate-400 text-xs mt-3">Spaceで解答を確認</p>
                             </div>
                         )}
 
                         {showAnswer && (
-                            <div className="flex justify-center gap-3 flex-wrap">
-                                <button onClick={() => { setFeedback("OK!"); nextQuestion(); }} className="bg-green-500 text-white px-6 py-3 rounded-full font-bold hover:bg-green-600 transition">
-                                    言えた
-                                </button>
-                                <button onClick={() => { setFeedback("次で取り返そう"); nextQuestion({ markWrong: true }); }} className="bg-slate-500 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-600 transition">
-                                    言えなかった
-                                </button>
-                            </div>
+                            <>
+                                <div className="flex justify-center gap-3 flex-wrap">
+                                    <button onClick={markSaid} className="bg-green-500 text-white px-6 py-3 rounded-full font-bold hover:bg-green-600 transition">
+                                        言えた
+                                    </button>
+                                    <button onClick={markNotSaid} className="bg-slate-500 text-white px-6 py-3 rounded-full font-bold hover:bg-slate-600 transition">
+                                        言えなかった
+                                    </button>
+                                </div>
+                                <p className="text-slate-400 text-xs mt-3">キーボード: ← 言えなかった / → 言えた</p>
+                            </>
                         )}
                         <div className="h-6 mt-4 font-bold text-indigo-600">{feedback}</div>
                     </div>
@@ -3213,7 +3871,13 @@ import "./styles.css";
             const [selectedPart, setSelectedPart] = useState(null);
             const [inputValue, setInputValue] = useState("");
             const [feedback, setFeedback] = useState("");
-            const [explanation, setExplanation] = useState("");
+            const [resultDetail, setResultDetail] = useState({ summary: "", reason: "", reviewPoints: [] });
+            const totalQuestions = questions.length;
+            const solvedCurrent = phase === 'result' ? 1 : 0;
+            const remainingCorrectToFinish = Math.max(
+                (flow.queue.length - flow.queuePos - solvedCurrent) + flow.retryQueue.length,
+                0
+            );
 
             useEffect(() => {
                 if (questions.length === 0) onComplete();
@@ -3225,7 +3889,7 @@ import "./styles.css";
                 setSelectedPart(null);
                 setInputValue("");
                 setFeedback("");
-                setExplanation("");
+                setResultDetail({ summary: "", reason: "", reviewPoints: [] });
             };
 
             useEffect(() => {
@@ -3261,18 +3925,45 @@ import "./styles.css";
 
             const jpPrompt = useMemo(() => {
                 const hasJapanese = (text) => /[ぁ-んァ-ン一-龯]/.test(String(text || ""));
+                const normalizeEnglish = (text) => String(text || "")
+                    .toLowerCase()
+                    .replace(/[.,!?'"-]/g, " ")
+                    .replace(/\s+/g, " ")
+                    .trim();
 
                 if (currentQ?.jp) return currentQ.jp;
                 if (currentQ?.translationJa) return currentQ.translationJa;
                 if (currentQ?.translationJP) return currentQ.translationJP;
                 if (currentQ?.original && hasJapanese(currentQ.original)) return currentQ.original;
 
-                const matched = course?.questions?.find(q => q.id === currentQ?.id);
-                if (matched?.jp) return matched.jp;
-                if (matched?.original && hasJapanese(matched.original)) return matched.original;
+                const correctedForLookup = PART_KEYS
+                    .map((key) => {
+                        const text = errorData.sentenceParts?.[key];
+                        if (!text) return null;
+                        if (!isCorrectSentence && key === activePartKey && errorData.correct) return errorData.correct;
+                        return text;
+                    })
+                    .filter(Boolean)
+                    .join(" ");
+                const normalizedCorrected = normalizeEnglish(correctedForLookup);
+                if (!normalizedCorrected) return "";
+
+                const matchedByTranslation = course?.questions?.find((q) => {
+                    const candidates = [
+                        q?.translation,
+                        q?.answer,
+                        q?.translationEn
+                    ];
+                    return candidates.some((candidate) => normalizeEnglish(candidate) === normalizedCorrected);
+                });
+
+                if (matchedByTranslation?.jp) return matchedByTranslation.jp;
+                if (matchedByTranslation?.original && hasJapanese(matchedByTranslation.original)) {
+                    return matchedByTranslation.original;
+                }
 
                 return "";
-            }, [currentQ, course]);
+            }, [currentQ, course, errorData, activePartKey, isCorrectSentence]);
 
             const correctedSentence = useMemo(() => {
                 return PART_KEYS
@@ -3286,86 +3977,38 @@ import "./styles.css";
                     .join(" ");
             }, [errorData, activePartKey, isCorrectSentence]);
 
-            const buildExplanation = () => {
-                if (isCorrectSentence) {
-                    return "この文は文法的に正しい文です。";
-                }
+            const originalSentence = useMemo(() => {
+                const composed = PART_KEYS
+                    .map((key) => errorData.sentenceParts?.[key] || null)
+                    .filter(Boolean)
+                    .join(" ")
+                    .trim();
+                if (composed) return composed;
+                return String(currentQ?.original || "").trim();
+            }, [PART_KEYS, errorData.sentenceParts, currentQ?.original]);
+
+            const manualReason = useMemo(() => {
+                const courseId = Number(course?.id);
+                const questionId = Number(currentQ?.id);
+                if (!courseId || !questionId) return null;
+                return ERROR_REASON_MAP?.[courseId]?.[questionId] || null;
+            }, [course?.id, currentQ?.id]);
+
+            const buildResultDetail = () => {
                 const wrongText = errorData.wrong || "誤り";
                 const correctText = errorData.correct || "正しい形";
-                const wrongLower = String(wrongText).toLowerCase();
-                const correctLower = String(correctText).toLowerCase();
-                const ensureReasonEnding = (text) => {
-                    const cleaned = String(text || "").trim().replace(/[。.!?]+$/g, "");
-                    if (!cleaned) return "";
-                    return cleaned.endsWith("から") ? `${cleaned}。` : `${cleaned}から。`;
+                const summary = isCorrectSentence
+                    ? "この文は文法的に正しい文です。"
+                    : `「${wrongText}」ではなく「${correctText}」を使います。`;
+                const fallbackReason = isCorrectSentence
+                    ? "この文は主語・動詞・語順がルール通りにできています。"
+                    : `文の型を確認し、「${wrongText}」を「${correctText}」に直すのがポイントです。`;
+
+                return {
+                    summary,
+                    reason: manualReason?.reason || fallbackReason,
+                    reviewPoints: Array.isArray(manualReason?.reviewPoints) ? manualReason.reviewPoints : []
                 };
-
-                const reasons = [];
-
-                // be動詞疑問文: 主語とbe動詞を逆にする
-                if (
-                    activePartKey === 'does_pre' &&
-                    (
-                        (/(^|\s)(are|is)\b/.test(correctLower) && /(you are|this is|my pen is)/.test(wrongLower))
-                        || (wrongLower === 'is' && correctLower === 'are')
-                        || (wrongLower === 'does' && correctLower === 'is')
-                        || (wrongLower === 'does' && correctLower === 'are')
-                    )
-                ) {
-                    reasons.push("be動詞の疑問文は、主語とbe動詞を逆にする");
-                }
-
-                // 一般動詞疑問文: Do / Does を文頭に置く
-                if (
-                    activePartKey === 'does_pre' &&
-                    (correctLower === 'do' || correctLower === 'does' || correctLower.startsWith("do ") || correctLower.startsWith("does "))
-                ) {
-                    reasons.push("一般動詞の疑問文は文頭にDoかDoesを置く");
-                    if (correctLower.includes("does") || correctLower === "does") {
-                        reasons.push("主語がIとyou以外の単数のときはDoesを使う");
-                    }
-                }
-
-                // Does の後ろは原形
-                if (
-                    activePartKey === 'does' &&
-                    (
-                        (wrongLower.includes("plays") && correctLower.includes("play"))
-                        || (wrongLower.includes("gets") && correctLower.includes("get"))
-                        || (wrongLower.includes("studies") && correctLower.includes("study"))
-                    )
-                ) {
-                    reasons.push("Doesを使う疑問文では、後ろの動詞は原形に戻す");
-                }
-
-                // 回答の主語は代名詞（this/thatは不可）
-                if (
-                    (wrongLower.includes(" this ") || wrongLower.startsWith("this ") || wrongLower.includes(" that ") || wrongLower.startsWith("that "))
-                    && (correctLower.includes(" it ") || correctLower.startsWith("it "))
-                ) {
-                    reasons.push("答えの主語は代名詞に置き換える");
-                    reasons.push("答えの主語にthisやthatは使わず、itを使う");
-                }
-
-                // 一般動詞疑問文の答え方（do/does/don't/doesn't）
-                if (
-                    (wrongLower.includes(" yes, i am") && correctLower.includes(" yes, i do"))
-                    || (wrongLower.includes("no, she does") && correctLower.includes("no, she doesn't"))
-                ) {
-                    reasons.push("一般動詞の疑問文への返答はdo / does / don't / doesn'tを使う");
-                }
-
-                // No で答えるなら not が必要
-                if (correctLower.includes("no,") && (correctLower.includes(" not") || correctLower.includes("n't"))) {
-                    reasons.push("Noで答えるときはnotを入れる");
-                }
-
-                const uniqueReasons = [...new Set(reasons.map(ensureReasonEnding).filter(Boolean))];
-                const reasonText = uniqueReasons.length > 0
-                    ? ` 理由: ${uniqueReasons.join(" ")}`
-                    : "";
-
-                return `解説: 「${wrongText}」ではなく「${correctText}」を使います。${reasonText}`;
             };
 
             const nextQuestion = () => {
@@ -3373,16 +4016,40 @@ import "./styles.css";
                 flow.advance(onComplete);
             };
 
-            const handleJudgeSubmit = () => {
-                if (!judgeChoice) {
-                    setFeedback("まず「正しい / 間違っている」を選んでください。");
-                    return;
-                }
+            useEffect(() => {
+                if (phase !== 'result') return;
 
+                const isInteractiveTarget = (target) => {
+                    if (!target || !(target instanceof HTMLElement)) return false;
+                    const tag = target.tagName;
+                    return (
+                        target.isContentEditable ||
+                        tag === "INPUT" ||
+                        tag === "TEXTAREA" ||
+                        tag === "SELECT"
+                    );
+                };
+
+                const onKeyDown = (e) => {
+                    if (e.defaultPrevented || e.repeat) return;
+                    if (e.metaKey || e.ctrlKey || e.altKey) return;
+                    if (isInteractiveTarget(e.target)) return;
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        nextQuestion();
+                    }
+                };
+
+                window.addEventListener("keydown", onKeyDown);
+                return () => window.removeEventListener("keydown", onKeyDown);
+            }, [phase]);
+
+            const handleJudgeChoice = (choice) => {
+                setJudgeChoice(choice);
                 if (isCorrectSentence) {
-                    if (judgeChoice === 'correct') {
+                    if (choice === 'correct') {
                         setFeedback("正解です。");
-                        setExplanation(buildExplanation());
+                        setResultDetail(buildResultDetail());
                         setPhase('result');
                     } else {
                         flow.markWrong();
@@ -3391,8 +4058,8 @@ import "./styles.css";
                     return;
                 }
 
-                if (judgeChoice === 'incorrect') {
-                    setFeedback("正解です。次は間違い箇所を選んでください。");
+                if (choice === 'incorrect') {
+                    setFeedback("");
                     setPhase('select_part');
                 } else {
                     flow.markWrong();
@@ -3412,7 +4079,7 @@ import "./styles.css";
                     return;
                 }
                 if (selectedPart === activePartKey) {
-                    setFeedback("正解です。修正して回答してください。");
+                    setFeedback("");
                     setInputValue("");
                     setPhase('fix_part');
                 } else {
@@ -3430,7 +4097,7 @@ import "./styles.css";
 
                 if (areEnglishAnswersEquivalent(inputValue, errorData.correct)) {
                     setFeedback("正解です。");
-                    setExplanation(buildExplanation());
+                    setResultDetail(buildResultDetail());
                     setPhase('result');
                 } else {
                     flow.markWrong();
@@ -3447,10 +4114,15 @@ import "./styles.css";
                         <button onClick={nextQuestion} className="text-xs bg-slate-200 text-slate-600 px-3 py-1 rounded hover:bg-slate-300 transition">Skip Question</button>
                     </div>
                     <div className="bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center">
+                        <div className="mb-4 text-sm text-slate-600">
+                            <span className="font-bold text-slate-700">問題数: {totalQuestions}問</span>
+                            <span className="mx-2 text-slate-300">|</span>
+                            <span>あと<span className="font-bold text-indigo-600">{remainingCorrectToFinish}</span>問正解で完了</span>
+                        </div>
                         <p className="text-slate-500 mb-4 font-bold">
                             {phase === 'judge' && "1. まず、文が正しいか間違っているかを判断してください。"}
                             {phase === 'select_part' && "2. 間違っている箇所をタップして、回答してください。"}
-                            {phase === 'fix_part' && "3. 選んだ箇所を正しく修正して、回答してください。"}
+                            {phase === 'fix_part' && "3. 選んだ箇所を正しく修正して、回答してください。また、その理由も答えてください。"}
                             {phase === 'result' && "4. 判定結果と解説です。"}
                         </p>
 
@@ -3458,6 +4130,13 @@ import "./styles.css";
                             <div className="mb-6 bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-left">
                                 <p className="text-xs font-bold text-indigo-500 tracking-wide mb-1">日本語訳</p>
                                 <p className="text-lg font-bold text-slate-800">{jpPrompt}</p>
+                            </div>
+                        )}
+
+                        {phase === 'fix_part' && originalSentence && (
+                            <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4 text-left">
+                                <p className="text-xs font-bold text-amber-700 tracking-wide mb-1">修正前の文</p>
+                                <p className="text-slate-900 font-mono">{originalSentence}</p>
                             </div>
                         )}
 
@@ -3504,9 +4183,9 @@ import "./styles.css";
 
                         {phase === 'judge' && (
                             <div className="mb-4">
-                                <div className="flex justify-center gap-3 mb-4">
+                                <div className="flex justify-center gap-3">
                                     <button
-                                        onClick={() => setJudgeChoice('incorrect')}
+                                        onClick={() => handleJudgeChoice('incorrect')}
                                         className={`px-5 py-2 rounded-full font-bold border ${judgeChoice === 'incorrect'
                                             ? 'bg-red-500 text-white border-red-500'
                                             : 'bg-white text-red-500 border-red-300'}`}
@@ -3514,7 +4193,7 @@ import "./styles.css";
                                         間違っている
                                     </button>
                                     <button
-                                        onClick={() => setJudgeChoice('correct')}
+                                        onClick={() => handleJudgeChoice('correct')}
                                         className={`px-5 py-2 rounded-full font-bold border ${judgeChoice === 'correct'
                                             ? 'bg-green-500 text-white border-green-500'
                                             : 'bg-white text-green-600 border-green-300'}`}
@@ -3522,9 +4201,6 @@ import "./styles.css";
                                         正しい
                                     </button>
                                 </div>
-                                <button onClick={handleJudgeSubmit} className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition">
-                                    回答する
-                                </button>
                             </div>
                         )}
 
@@ -3546,19 +4222,36 @@ import "./styles.css";
 
                         {phase === 'result' && (
                             <div className="mb-4">
-                                <div className="mb-4 bg-slate-50 rounded-xl p-4 text-left">
-                                    <p className="text-xs font-bold text-slate-500 tracking-wide mb-1">解説</p>
-                                    <p className="text-slate-700 font-bold">{explanation}</p>
+                                <div className="space-y-3 mb-4 text-left">
+                                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                        <p className="text-xs font-bold text-slate-500 tracking-wide mb-1">判定</p>
+                                        <p className="text-slate-700 font-bold">{resultDetail.summary}</p>
+                                    </div>
                                     {!isCorrectSentence && correctedSentence && (
-                                        <>
-                                            <p className="text-xs font-bold text-slate-500 tracking-wide mt-3 mb-1">正しい文</p>
+                                        <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                                            <p className="text-xs font-bold text-green-700 tracking-wide mb-1">正しい文</p>
                                             <p className="text-slate-900 font-mono">{correctedSentence}</p>
-                                        </>
+                                        </div>
+                                    )}
+                                    <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                                        <p className="text-xs font-bold text-indigo-600 tracking-wide mb-1">理由（なぜこの答えになる？）</p>
+                                        <p className="text-slate-800 font-bold leading-relaxed">{resultDetail.reason}</p>
+                                    </div>
+                                    {resultDetail.reviewPoints.length > 0 && (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                                            <p className="text-xs font-bold text-amber-700 tracking-wide mb-2">一問一答で復習するポイント</p>
+                                            <ul className="list-disc pl-5 text-slate-700 text-sm space-y-1">
+                                                {resultDetail.reviewPoints.map((point, index) => (
+                                                    <li key={`${point}-${index}`}>{point}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     )}
                                 </div>
                                 <button onClick={nextQuestion} className="bg-green-500 text-white px-8 py-3 rounded-full font-bold hover:bg-green-600 transition">
                                     次に進む
                                 </button>
+                                <p className="text-slate-400 text-xs mt-3">Enterで次へ</p>
                             </div>
                         )}
 
@@ -3572,6 +4265,11 @@ import "./styles.css";
         const TrainingStep = ({ questions, mode = "sort", onComplete, course }) => {
             const flow = useRetryQuestionFlow(questions, { randomize: true });
             const currentQIndex = typeof flow.currentIndex === "number" ? flow.currentIndex : 0;
+            const totalQuestions = questions.length;
+            const remainingCorrectToFinish = Math.max(
+                (flow.queue.length - flow.queuePos) + flow.retryQueue.length,
+                0
+            );
             const activeFolders = useMemo(
                 () => (
                     Array.isArray(course?.sortFolders) && course.sortFolders.length > 0
@@ -3863,6 +4561,11 @@ import "./styles.css";
 
                     {/* Progress & Header */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6 text-center sticky top-0 z-10">
+                        <div className="mb-3 text-sm text-slate-600">
+                            <span className="font-bold text-slate-700">問題数: {totalQuestions}問</span>
+                            <span className="mx-2 text-slate-300">|</span>
+                            <span>あと<span className="font-bold text-indigo-600">{remainingCorrectToFinish}</span>問正解で完了</span>
+                        </div>
                         <div className="flex justify-between items-center mb-2 px-2">
                             <span className="text-xs font-bold text-slate-400">Question {flow.queuePos + 1} / {questions.length}</span>
                             <button onClick={nextQuestion} className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1">Skip <ArrowRight size={12} /></button>
